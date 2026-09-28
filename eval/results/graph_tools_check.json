@@ -1,0 +1,422 @@
+[
+ {
+  "id": "q05",
+  "type": "relational",
+  "family": "Boss 的掉落物",
+  "status": "PASS",
+  "note": "",
+  "returned": [
+   "Remembrance of theBlasphemous",
+   "Rykard's Great Rune"
+  ]
+ },
+ {
+  "id": "q06",
+  "type": "relational",
+  "family": "地點的 bosses",
+  "status": "PASS",
+  "note": "",
+  "returned": [
+   "Abductor Virgins",
+   "God-Devouring Serpent",
+   "Godskin Noble",
+   "Magma Wyrm",
+   "Rykard, Lord of Blasphemy"
+  ]
+ },
+ {
+  "id": "q07",
+  "type": "multi_hop",
+  "family": "",
+  "status": "SKIP",
+  "note": "需要理解「主線 boss」等說法，交給 S5 的 LLM",
+  "returned": []
+ },
+ {
+  "id": "q08",
+  "type": "multi_hop",
+  "family": "既是 NPC 又是 Boss",
+  "status": "FAIL",
+  "note": "工具沒取回任何實體",
+  "returned": []
+ },
+ {
+  "id": "q09",
+  "type": "multi_hop",
+  "family": "",
+  "status": "SKIP",
+  "note": "需要理解「主線 boss」等說法，交給 S5 的 LLM",
+  "returned": []
+ },
+ {
+  "id": "q51",
+  "type": "relational",
+  "family": "Boss 的掉落物",
+  "status": "PASS",
+  "note": "",
+  "returned": [
+   "Iron Rivet Armor",
+   "Iron Rivet Gauntlets",
+   "Iron Rivet Greaves",
+   "Iron Rivet Set",
+   "Red Bear's Claw"
+  ]
+ },
+ {
+  "id": "q52",
+  "type": "relational",
+  "family": "Boss 的掉落物",
+  "status": "PASS",
+  "note": "",
+  "returned": [
+   "Roar of Rugalea"
+  ]
+ },
+ {
+  "id": "q53",
+  "type": "relational",
+  "family": "Boss 的掉落物",
+  "status": "PASS",
+  "note": "",
+  "returned": [
+   "Remembrance of theLichdragon"
+  ]
+ },
+ {
+  "id": "q54",
+  "type": "relational",
+  "family": "Boss 的掉落物",
+  "status": "PASS",
+  "note": "",
+  "returned": [
+   "Omenkiller Rollo"
+  ]
+ },
+ {
+  "id": "q55",
+  "type": "relational",
+  "family": "Boss 的掉落物",
+  "status": "PASS",
+  "note": "",
+  "returned": [
+   "Jar Cannon"
+  ]
+ },
+ {
+  "id": "q56",
+  "type": "relational",
+  "family": "Boss 的掉落物",
+  "status": "PASS",
+  "note": "",
+  "returned": [
+   "Remembrance of theNaturalborn"
+  ]
+ },
+ {
+  "id": "q57",
+  "type": "relational",
+  "family": "Boss 的掉落物",
+  "status": "PASS",
+  "note": "",
+  "returned": [
+   "All-Knowing Armor",
+   "All-Knowing Armor (Altered)",
+   "All-Knowing Gauntlets",
+   "All-Knowing Greaves",
+   "All-Knowing Helm",
+   "All-Knowing Set",
+   "Scepter of the All-Knowing"
+  ]
+ },
+ {
+  "id": "q58",
+  "type": "relational",
+  "family": "Boss 的掉落物",
+  "status": "PASS",
+  "note": "",
+  "returned": [
+   "Great Grave Glovewort",
+   "Rotten Gravekeeper Cloak"
+  ]
+ },
+ {
+  "id": "q59",
+  "type": "relational",
+  "family": "地點的 bosses",
+  "status": "PASS",
+  "note": "",
+  "returned": [
+   "Death Knight"
+  ]
+ },
+ {
+  "id": "q60",
+  "type": "relational",
+  "family": "地點的 bosses",
+  "status": "PASS",
+  "note": "",
+  "returned": [
+   "Divine Beast Dancing Lion (Belurat, Tower Settlement)",
+   "Ulcerated Tree Spirit"
+  ]
+ },
+ {
+  "id": "q61",
+  "type": "relational",
+  "family": "地點的 bosses",
+  "status": "PASS",
+  "note": "",
+  "returned": [
+   "Beastman of Farum Azula"
+  ]
+ },
+ {
+  "id": "q62",
+  "type": "relational",
+  "family": "地點的 bosses",
+  "status": "PASS",
+  "note": "",
+  "returned": [
+   "Erdtree Burial Watchdog"
+  ]
+ },
+ {
+  "id": "q63",
+  "type": "relational",
+  "family": "地點的 bosses",
+  "status": "PASS",
+  "note": "",
+  "returned": [
+   "Erdtree Burial Watchdog"
+  ]
+ },
+ {
+  "id": "q64",
+  "type": "relational",
+  "family": "地點的 bosses",
+  "status": "PASS",
+  "note": "",
+  "returned": [
+   "Demi-Human Queen Gilika"
+  ]
+ },
+ {
+  "id": "q65",
+  "type": "relational",
+  "family": "地點的 NPCs",
+  "status": "PASS",
+  "note": "",
+  "returned": [
+   "Swordhand of Night Anna"
+  ]
+ },
+ {
+  "id": "q66",
+  "type": "relational",
+  "family": "地點的 NPCs",
+  "status": "PASS",
+  "note": "",
+  "returned": [
+   "Fire Knight Queelign"
+  ]
+ },
+ {
+  "id": "q67",
+  "type": "relational",
+  "family": "地點的 NPCs",
+  "status": "PASS",
+  "note": "",
+  "returned": [
+   "Isolated Merchant Dragonbarrow"
+  ]
+ },
+ {
+  "id": "q68",
+  "type": "relational",
+  "family": "地點的 NPCs",
+  "status": "PASS",
+  "note": "",
+  "returned": [
+   "Primeval Sorcerer Azur"
+  ]
+ },
+ {
+  "id": "q69",
+  "type": "relational",
+  "family": "地點的 NPCs",
+  "status": "PASS",
+  "note": "",
+  "returned": [
+   "Dung Eater",
+   "Lesser Fingercreepers"
+  ]
+ },
+ {
+  "id": "q70",
+  "type": "relational",
+  "family": "地點的 NPCs",
+  "status": "PASS",
+  "note": "",
+  "returned": [
+   "Godefroy the Grafted"
+  ]
+ },
+ {
+  "id": "q71",
+  "type": "multi_hop",
+  "family": "紀念品換什麼",
+  "status": "PASS",
+  "note": "",
+  "returned": [
+   "Messmer's Orb",
+   "Spear of the Impaler"
+  ]
+ },
+ {
+  "id": "q72",
+  "type": "multi_hop",
+  "family": "紀念品換什麼",
+  "status": "PASS",
+  "note": "",
+  "returned": [
+   "Hand of Malenia",
+   "Scarlet Aeonia"
+  ]
+ },
+ {
+  "id": "q73",
+  "type": "multi_hop",
+  "family": "紀念品換什麼",
+  "status": "PASS",
+  "note": "",
+  "returned": [
+   "Blasphemous Blade",
+   "Rykard's Rancor"
+  ]
+ },
+ {
+  "id": "q74",
+  "type": "multi_hop",
+  "family": "武器反查 boss",
+  "status": "PASS",
+  "note": "",
+  "returned": [
+   "Godfrey, First Elden Lord",
+   "Hoarah Loux, Warrior"
+  ]
+ },
+ {
+  "id": "q75",
+  "type": "multi_hop",
+  "family": "紀念品換什麼",
+  "status": "PASS",
+  "note": "",
+  "returned": [
+   "Carian Regal Scepter",
+   "Rennala's Full Moon"
+  ]
+ },
+ {
+  "id": "q76",
+  "type": "multi_hop",
+  "family": "",
+  "status": "SKIP",
+  "note": "需要理解「主線 boss」等說法，交給 S5 的 LLM",
+  "returned": []
+ },
+ {
+  "id": "q77",
+  "type": "multi_hop",
+  "family": "",
+  "status": "SKIP",
+  "note": "需要理解「主線 boss」等說法，交給 S5 的 LLM",
+  "returned": []
+ },
+ {
+  "id": "q78",
+  "type": "multi_hop",
+  "family": "紀念品換什麼",
+  "status": "PASS",
+  "note": "",
+  "returned": [
+   "Marika's Hammer",
+   "Sacred Relic Sword"
+  ]
+ },
+ {
+  "id": "q79",
+  "type": "multi_hop",
+  "family": "紀念品換什麼",
+  "status": "PASS",
+  "note": "",
+  "returned": [
+   "Ash of War: Divine Beast Frost Stomp",
+   "Enraged Divine Beast"
+  ]
+ },
+ {
+  "id": "q80",
+  "type": "multi_hop",
+  "family": "紀念品換什麼",
+  "status": "PASS",
+  "note": "",
+  "returned": [
+   "Burn, O Flame!",
+   "Giant's Red Braid"
+  ]
+ },
+ {
+  "id": "q81",
+  "type": "multi_hop",
+  "family": "既是 NPC 又是 Boss",
+  "status": "PASS",
+  "note": "",
+  "returned": [
+   "Godefroy the Grafted"
+  ]
+ },
+ {
+  "id": "q82",
+  "type": "multi_hop",
+  "family": "紀念品換什麼",
+  "status": "PASS",
+  "note": "",
+  "returned": [
+   "Black Blade",
+   "Maliketh's Black Blade"
+  ]
+ },
+ {
+  "id": "q83",
+  "type": "multi_hop",
+  "family": "紀念品換什麼",
+  "status": "PASS",
+  "note": "",
+  "returned": [
+   "Axe of Godrick",
+   "Grafted Dragon"
+  ]
+ },
+ {
+  "id": "q84",
+  "type": "multi_hop",
+  "family": "紀念品換什麼",
+  "status": "PASS",
+  "note": "",
+  "returned": [
+   "Ash of War: Waves of Darkness",
+   "Bastard's Stars"
+  ]
+ },
+ {
+  "id": "q85",
+  "type": "multi_hop",
+  "family": "紀念品換什麼",
+  "status": "PASS",
+  "note": "",
+  "returned": [
+   "Dragon King's Cragblade",
+   "Placidusax's Ruin"
+  ]
+ }
+]

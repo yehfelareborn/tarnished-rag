@@ -26,6 +26,8 @@
 
 - **預期問題**：`Imbued Sword Key`（id=18）的 `dlc` 欄位是髒資料字串 `"Base game & Shadow of the Erdtree DLC"`，一開始誤判為「本篇+DLC 都有」
 - **實際改正**：使用者確認是本篇道具，`dlc` 改為 `"0"`（原字串是爬蟲髒資料，不能照字面解讀成雙版本）
+- **預期問題（S4 查同名 Item 時發現，2026-09-28）**：`Larval Tear` 在這個檔案有兩列：id=6（`dlc="1"`，有完整地點說明）與 id=64（`dlc="0"`，`location` 只寫 `See Larval Tear for a full list of locations`）。id=6 的 `location` 文字開頭是 DLC 地點（Prospect Town、`[See Shadow of the Erdtree Map]`），爬蟲因此把整列標成 DLC；但它是本篇就有的物品（Rennala 重生要用，圖裡掉落它的 4 個 boss 都是本篇的）
+- **實際改正**：使用者確認 Larval Tear 絕對是本篇，id=6 的 `dlc` 由 `"1"` 改為 `"0"`；id=64 本來就是 `"0"`，不動。與 Imbued Sword Key、Golden Rune 同一原則：本篇就有、只是 DLC 也拿得到的物品標 `dlc=0`。這兩列是同名重複，是否合併還沒決定（見 `docs/graph-schema.md` 待決定）
 
 ## creatures.csv
 
@@ -62,6 +64,25 @@
 - **預期問題**：Leyndell, Royal Capital / Ainsel River 的 `bosses` 欄位放的是子地點名稱，不是 boss 名稱
 - **實際改正**：改用 `bosses.csv` 自己的地點欄位反查重建正確清單（Leyndell 9 隻、Ainsel River 2 隻）；查不到對應 boss 的子地點（Minor Erdtree Church、Divine Tower of West Altus）沒有強行補值
 - **沒有動的**：`Sealed Tunnel` 的 `npcs` 欄位其實是道具清單，只從出題候選池剔除，資料本身還沒修；`locations.csv` 其餘 282 個地點沒做過系統性稽核
+
+## 黏字（S4 掃描時發現，2026-09-28）
+
+S4 的查詢工具回傳 `Remembrance of theBlasphemous` 時發現 `remembrances.csv` 的 5 個紀念品名稱少了空格，於是掃了 `data/raw/` 全部 29 個 CSV 的所有欄位，找三種黏法：`theX`（如 `theBlasphemous`）、小字接大寫（如 `ofThe`）、句號後沒空格（如 `Reader.Alternatively`）。**掃描的限制**：只抓「小寫接大寫」的邊界，小寫接小寫的抓不到（肉眼看到一個：`shields.csv` id=8 描述裡的 `criticalhit`，該是 `critical hit`），所以「沒有更多」只代表這三種樣式掃不到。
+
+### 小字接大寫（3 處，已修）
+- **預期問題**：3 處文字欄位有小字直接接大寫；名稱欄位沒有受影響
+- **實際改正**（`clean_raw.py` 的 `fix_glued_text()`，每處都要求原字串在該欄位剛好出現一次，否則報錯）：
+  - `armors.csv` id=168 `description`：`Land ofReeds` → `Land of Reeds`
+  - `npcs.csv` id=10 `role`：`Garments Adjuster andQuest NPC` → `Garments Adjuster and Quest NPC`
+  - `skills.csv` id=106 `locations`：`drop aBanished Knight's Halberd` → `drop a Banished Knight's Halberd`
+- `npcs.csv`、`skills.csv` 原本沒有處理版，這次各新增一份 processed 版；`armors.csv` 的處理版本來就存在（dlc 編碼統一）。`build_graph.py` 與 `build_corpus.py` 都優先讀 processed，所以修正會流到圖與語料庫；評分的來源比對（`source_key`）不區分 raw／processed，題庫來源不受影響
+- **驗證**：逐格比對 raw 與 processed——`npcs.csv`、`skills.csv` 各剛好 1 格不同，`armors.csv`（忽略 dlc 欄）剛好 1 格；`remembrances.csv` 沒有 processed 版（紀念品名稱沒被動）；修正後「小字接大寫」剩 0 處。重建語料庫（3649 篇）與圖（3905 節點、6598 邊）數量不變；51 個單元測試與題庫檢查結果不變。同一句 `Land of Reeds.Raises` 後半的句號黏字沒動（使用者只指定修小字接大寫）
+
+### 掃到但依使用者決定沒動（只記錄）
+- **5 個紀念品名稱黏字**（使用者決定不動）：`items/remembrances.csv` 的 `name` 欄，id 12、13、17、18、24：`Remembrance of theNaturalborn`（Astel）、`theLichdragon`（Lichdragon Fortissax）、`theBlasphemous`（Rykard）、`theStarscourge`（Starscourge Radahn）、`theDragonlord`（Dragonlord Placidusax），都是本篇（dlc=0）。只有 `name` 欄黏：同一列的 `image` 網址與 `description` 拼法正確，同檔案其他 20 列的名稱都有空格。影響：圖的 5 個節點名稱與查詢工具的回傳原樣帶黏字（建圖與工具的名稱正規化會修這種黏字，所以比對不受影響）
+- **2 處 `theX` 在描述文字**：`incantations.csv` id=119（`burning theErdtree`）、`weapons.csv` id=97（`the power of theRune of Death`）。使用者只指定修小字接大寫那 3 處，這 2 處沒動
+- **1247 處句號後沒空格**：分布在 27 個（檔案，欄位），全是描述／取得方式／效果這類自由文字（例如 `armors.csv` 描述 472 處、取得方式 178 處，`talismans.csv`、`materials.csv`、`sorceries.csv` 等也多）。是整個資料集的普遍現象，看起來是原網頁的段落換行在抓取時被直接接起來，跟紀念品那批無關。這些欄位沒有被圖解析（只是節點的屬性文字），沒動
+- **`criticalhit`**（`shields.csv` id=8）：小寫接小寫，掃描樣式抓不到，肉眼發現，沒動
 
 ## 沒有動的（明確擱置）
 

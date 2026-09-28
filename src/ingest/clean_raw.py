@@ -97,9 +97,12 @@ def fix_consumables() -> None:
 
 
 def fix_key_items() -> None:
-    """items/keyItems.csv 的 Imbued Sword Key (id=18)：
-    dlc 欄位原值是髒資料字串 "Base game & Shadow of the Erdtree DLC"，
-    使用者確認這是本篇道具，改回 "0"。
+    """items/keyItems.csv 的 dlc 標記修正（都經使用者確認）：
+    - Imbued Sword Key (id=18)：dlc 欄位原值是髒資料字串 "Base game & Shadow of the Erdtree DLC"，
+      使用者確認這是本篇道具，改回 "0"。
+    - Larval Tear (id=6)：原值 "1"。這一列的 location 文字開頭是 DLC 地點（Prospect Town），爬蟲因此標成 DLC，
+      但它是本篇就有的物品（圖裡掉落它的 boss 全是本篇的），使用者確認是 "0"（S4 查同名 Item 時發現）。
+      同名的另一列（id=64，dlc 本來就是 "0"）不動。
     """
     src = RAW / "items" / "keyItems.csv"
     dst = OUT / "items" / "keyItems.csv"
@@ -110,18 +113,72 @@ def fix_key_items() -> None:
         rows = list(reader)
         fieldnames = reader.fieldnames
 
+    dlc_fixes = {"18": "Imbued Sword Key", "6": "Larval Tear"}      # id -> 預期的名稱（對不上就報錯，不默默改錯列）
     fixed = 0
     for row in rows:
-        if row["id"] == "18":
+        if row["id"] in dlc_fixes:
+            if row["name"].strip() != dlc_fixes[row["id"]]:
+                raise ValueError(f"items/keyItems.csv id={row['id']} 應該是 {dlc_fixes[row['id']]!r}，實際是 {row['name']!r}")
             row["dlc"] = "0"
             fixed += 1
+    if fixed != len(dlc_fixes):
+        raise ValueError(f"items/keyItems.csv 只修了 {fixed} 列，預期 {len(dlc_fixes)} 列")
 
     with dst.open("w", encoding="utf-8", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(rows)
 
-    print(f"items/keyItems.csv: fixed {fixed} row (Imbued Sword Key dlc -> '0')")
+    print(f"items/keyItems.csv: fixed {fixed} rows (Imbued Sword Key, Larval Tear dlc -> '0')")
+
+
+# 使用者確認要修的「小字接大寫」黏字（S4 掃描 data/raw 所有欄位時發現，2026-09-28）：
+# (檔案, 列 id, 欄位, 原字串, 修正後)。只修這三處。
+# 同一次掃描還發現、但依使用者決定**沒動**、只記錄的：
+#   - items/remembrances.csv 的 name 欄有 5 個 `theX` 黏字（Remembrance of theNaturalborn 等）
+#   - incantations.csv id=119、weapons.csv id=97 的 description 各有一處 `theX`
+#   - 各檔案自由文字欄位共 1247 處句號後沒空格（Reader.Alternatively）
+# 詳見 docs/note.md。
+GLUED_TEXT_FIXES = [
+    ("armors.csv", "168", "description", "ofReeds", "of Reeds"),
+    ("npcs.csv", "10", "role", "andQuest", "and Quest"),
+    ("skills.csv", "106", "locations", "aBanished", "a Banished"),
+]
+
+
+# 同一次執行裡前面的步驟已經從 raw 產生過 processed 版的檔案（normalize_dlc_flag），要在那個版本上繼續改。
+# 其他檔案一律從 raw 出發：如果讀「processed 有就讀 processed」，第二次執行會讀到上一次的成品，
+# 原字串已經不存在而報錯（重複執行的結果必須一樣）。
+PROCESSED_FIRST = {"armors.csv"}
+
+
+def fix_glued_text() -> None:
+    """依 GLUED_TEXT_FIXES 修正黏在一起的字，寫到 data/processed；每個替換都要求該欄位裡「原字串」剛好出現一次，
+    否則直接報錯，不默默略過。可重複執行（見 PROCESSED_FIRST）。
+    用 csv.reader／writer 逐列處理，欄位數不一致的列多出來的欄位也原樣保留。"""
+    by_file = {}
+    for name, row_id, col, old, new in GLUED_TEXT_FIXES:
+        by_file.setdefault(name, []).append((row_id, col, old, new))
+    for name, fixes in by_file.items():
+        src = OUT / name if name in PROCESSED_FIRST else RAW / name
+        dst = OUT / name
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        with src.open(encoding="utf-8", newline="") as f:
+            rows = list(csv.reader(f))
+        header = rows[0]
+        id_i = header.index("id")
+        for row_id, col, old, new in fixes:
+            col_i = header.index(col)
+            target = [r for r in rows[1:] if r and r[id_i] == row_id]
+            if len(target) != 1:
+                raise ValueError(f"{name}: id={row_id} 應該剛好一列，找到 {len(target)} 列")
+            cell = target[0][col_i]
+            if cell.count(old) != 1:
+                raise ValueError(f"{name} id={row_id} [{col}]: {old!r} 應該剛好出現一次，實際 {cell.count(old)} 次")
+            target[0][col_i] = cell.replace(old, new)
+        with dst.open("w", encoding="utf-8", newline="") as f:
+            csv.writer(f).writerows(rows)
+        print(f"{name}: fixed {len(fixes)} glued word(s) -> data/processed/dlc_scrape/{name}")
 
 
 # id -> 使用者確認的正確 HP 字串（沿用檔案其他多階段 boss 的既有格式：
@@ -467,6 +524,7 @@ if __name__ == "__main__":
     normalize_dlc_flag("incantations.csv")
     fix_consumables()
     fix_key_items()
+    fix_glued_text()
     fix_locations()
     fix_creatures()
     fix_bosses()

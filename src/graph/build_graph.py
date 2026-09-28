@@ -11,6 +11,7 @@ import ast
 import csv
 import difflib
 import html
+import json
 import os
 import re
 import unicodedata
@@ -220,7 +221,75 @@ def pick(cands):
     return sorted(cands, key=rank)[0]
 
 
-NOISE_STR = re.compile(r"^(map link|elden ring map link|npcs?|spirit npc|\?+|to be added|n/a|-+|none|"
+# 同名 Item 合併（S4 查詢工具發現，使用者 2026-09-28 決定合併）。
+# 以 norm(name) 分組，同一組只留一個節點。不合併的組：同名但其實是不同任務狀態的物品，
+# 硬併會把不同物品變成一個（Lord of Blood's Favor 是白布與染紅的布；Unalloyed Gold Needle 有完整、斷掉、修復三種），
+# 留給使用者用遊戲知識決定。
+MERGE_EXCLUDE = {norm("Lord of Blood's Favor"), norm("Unalloyed Gold Needle")}
+MERGED = {}                 # 被併掉的 uid -> 保留的 uid
+MERGE_LOG = []              # 稽核：每個被併掉的節點一列
+ITEM_MERGE_CSV = ROOT / "data" / "processed" / "graph_item_merges.csv"
+MERGE_SKIP_KEYS = {"uid", "row_id", "source_file", "name", "item_type", "dlc", "stub"}
+
+
+def merge_duplicate_items():
+    """把同名（norm 後相同）的 Item 節點合成一個，在建邊之前做，後面所有名稱比對就只會找到保留的那個。
+
+    保留誰：依 ITEM_PRIORITY（與 pick() 同一張表），同來源取列號最小的。
+    不丟資料：保留者缺的欄位用被併掉的補上；兩份都有值但不同的欄位，保留者的值不變，另一份的值記在
+    merged_variants（JSON 字串）；被併掉的 uid 記在 merged_from，所有來源分類記在 item_types，
+    拼法不同的名稱記在 aliases。每個被併掉的節點另寫一列到 graph_item_merges.csv。"""
+    groups = defaultdict(list)
+    for p in nodes["Item"]:
+        groups[norm(p["name"])].append(p["uid"])
+    for key, uids in groups.items():
+        if len(uids) < 2 or key in MERGE_EXCLUDE:
+            continue
+        if len({node_props[u]["dlc"] for u in uids}) > 1:          # 不該發生；dlc 不同就不自動合併
+            log_unmatched("item_merge_skipped_dlc_differs", norm(key), ", ".join(uids), "")
+            continue
+        uids = sorted(uids, key=lambda u: (ITEM_PRIORITY.index(node_props[u]["item_type"])
+                                           if node_props[u].get("item_type") in ITEM_PRIORITY else 99,
+                                           int(node_props[u]["row_id"])))
+        keep, rest = uids[0], uids[1:]
+        kp = node_props[keep]
+        variants, aliases, types = [], list(kp.get("aliases", [])), [kp.get("item_type")]
+        for u in rest:
+            op = node_props[u]
+            differs = {}
+            for k, v in op.items():
+                if k in MERGE_SKIP_KEYS:
+                    continue
+                if kp.get(k) in (None, ""):
+                    kp[k] = v                                        # 補上保留者沒有的欄位
+                elif str(kp[k]).strip() != str(v).strip():
+                    differs[k] = v
+            if op["name"] != kp["name"] and op["name"] not in aliases:
+                aliases.append(op["name"])                           # 拼法不同的名稱（如黏字與正確拼法）
+            if op.get("item_type") not in types:
+                types.append(op.get("item_type"))
+            if differs:
+                variants.append({"uid": u, "source_file": op["source_file"], "row_id": op["row_id"], "differs": differs})
+            MERGE_LOG.append({"kept": keep, "merged": u, "name": kp["name"], "merged_name": op["name"],
+                              "conflicts": json.dumps({k: [kp[k], v] for k, v in differs.items()}, ensure_ascii=False)})
+        kp["merged_from"] = rest
+        kp["item_types"] = types
+        if aliases:
+            kp["aliases"] = aliases
+        if variants:
+            kp["merged_variants"] = json.dumps(variants, ensure_ascii=False)
+        gone = set(rest)
+        nodes["Item"] = [p for p in nodes["Item"] if p["uid"] not in gone]
+        for u in rest:
+            del node_props[u]
+            MERGED[u] = keep
+        name_index[key] = [(l, u) for l, u in name_index[key] if u not in gone]
+        nospace_index[key.replace(" ", "")] = [(l, u) for l, u in nospace_index[key.replace(" ", "")] if u not in gone]
+        label_index["Item"][key] = [u for u in label_index["Item"][key] if u not in gone]
+        stats["items_merged"] += len(rest)
+
+
+NOISE_STR =re.compile(r"^(map link|elden ring map link|npcs?|spirit npc|\?+|to be added|n/a|-+|none|"
                        r"other drops:?|used to duplicate.*)$", re.I)
 
 
@@ -235,7 +304,7 @@ def is_noise(text):
 
 
 # 依遊戲知識判斷為同一實體的不同寫法（待使用者確認）；key/value 都是 norm() 後的字串
-ALIASES = {norm(k): norm(v) for k, v in {
+ALIAS_TEXT = {
     "Morgott, the Omen King": "Morgott The Grace-Given Veiled Monarch Omen King",
     "Rennala, Queen of the Full Moon": "Rennala Carian Queen of the Full Moon",
     "Nepheli Loux": "Nepheli Loux, Warrior",
@@ -255,12 +324,14 @@ ALIASES = {norm(k): norm(v) for k, v in {
     "Ranni the Witch": "Ranni Witch Carian Lunar Princess",
     "Ensha": "Ensha of the Royal Remains",
     "Perfumer Tricia": "Perfumer Tricia and Misbegotten Warrior",
-}.items()}
+}
+ALIASES = {norm(k): norm(v) for k, v in ALIAS_TEXT.items()}
 
 # bosses.csv 地點欄的整串別名（使用者確認）：優先於掃描，否則會先掃到較短的名稱（Jagged Peak 區域）而誤連
-LOCATION_ALIASES = {norm(k): v for k, v in {
+LOCATION_ALIAS_TEXT = {
     "Jagged Peak Foothills": "Foot of the Jagged Peak",
-}.items()}
+}
+LOCATION_ALIASES = {norm(k): v for k, v in LOCATION_ALIAS_TEXT.items()}
 
 # 地點欄整串掃描後剩下的字串，經使用者確認的處理：對到既有區域，或建 Location stub（該地點不在 locations.csv）。
 # 不在這張表裡的殘留字串一律記到 graph_unmatched.csv（kind=boss_location_leftover），不無聲丟掉。
@@ -597,6 +668,7 @@ def build_edges(loc_rows):
                        "Reusable Tool": "Item", "Ash of War": "AshOfWar"}
     for r in rows:
         ruid = f"Item:remembrances:{r['id']}"
+        ruid = MERGED.get(ruid, ruid)      # 這一列的節點若被併進同名的另一個，改用保留的那個
         rdlc = node_props[ruid]["dlc"]
         bs = boss_by_base.get(ALIASES.get(norm(r["boss"]), norm(r["boss"]))) or [resolve(r["boss"], ["Boss"]) or stub("Boss", r["boss"], src, rdlc)]
         for b in bs:
@@ -632,6 +704,16 @@ def build_edges(loc_rows):
 
 
 # ---------------------------------------------------------------- boss_stats 合併
+
+def attach_aliases():
+    """把別名表寫成目標節點的 aliases 屬性，讓查詢工具（S4）只讀圖就認得別名，
+    例如問句的 'Rennala, Queen of the Full Moon' 指向 Boss 'Rennala Carian Queen of the Full Moon'。"""
+    for text, target in [*ALIAS_TEXT.items(), *LOCATION_ALIAS_TEXT.items()]:
+        for _, uid in name_index.get(norm(target), []):
+            aliases = node_props[uid].setdefault("aliases", [])
+            if text not in aliases:
+                aliases.append(text)
+
 
 def merge_boss_stats():
     rows = list(csv.DictReader(STATS_CSV.open(encoding="utf-8", newline="")))
@@ -690,8 +772,10 @@ def write_graph(driver):
 def main():
     load_dotenv(ROOT / ".env")
     loc_rows = build_nodes()
+    merge_duplicate_items()
     build_edges(loc_rows)
     merge_boss_stats()
+    attach_aliases()
 
     driver = GraphDatabase.driver(os.environ["NEO4J_URI"], auth=(os.environ["NEO4J_USER"], os.environ["NEO4J_PASSWORD"]))
     write_graph(driver)
@@ -712,6 +796,12 @@ def main():
         w.writeheader()
         w.writerows(stubs)
 
+    with ITEM_MERGE_CSV.open("w", encoding="utf-8", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=["kept", "merged", "name", "merged_name", "conflicts"])
+        w.writeheader()
+        w.writerows(MERGE_LOG)
+
+    print("同名 Item 合併:", stats["items_merged"], "個節點併入保留的節點（稽核：graph_item_merges.csv）")
     print("stub 節點:", dict(Counter(x["label"] for x in stubs)), "合計", len(stubs))
     print("節點:", {k: len(v) for k, v in nodes.items()}, "合計", sum(len(v) for v in nodes.values()))
     print("邊:", {k: len(v) for k, v in edges.items()}, "合計", sum(len(v) for v in edges.values()))
