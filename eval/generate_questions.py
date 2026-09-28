@@ -8,8 +8,9 @@ import json
 import random
 from pathlib import Path
 
-RAW = Path("/home/yehfela/Documents/tarnished-rag/data/raw/dlc_scrape")
-PROC = Path("/home/yehfela/Documents/tarnished-rag/data/processed/dlc_scrape")
+ROOT = Path(__file__).resolve().parents[1]
+RAW = ROOT / "data" / "raw" / "dlc_scrape"
+PROC = ROOT / "data" / "processed" / "dlc_scrape"
 
 random.seed(7)
 
@@ -188,6 +189,6 @@ print(f"候選池總數: {len(pool)}")
 from collections import Counter
 print(Counter(p["type"] for p in pool))
 
-out = Path("/tmp/claude-1000/-home-yehfela-Documents-tarnished-rag/6f510b06-b91f-4e3b-a0c5-3910258aa67b/scratchpad/question_pool.json")
+out = Path(__file__).resolve().parent / "question_pool.json"
 out.write_text(json.dumps(pool, ensure_ascii=False, indent=2))
 print("寫到", out)

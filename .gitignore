@@ -1,2 +1,4 @@
 .env
 __pycache__/
+eval/question_pool.json
+eval/curated_60.json

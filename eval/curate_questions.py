@@ -1,10 +1,12 @@
 import json
+from pathlib import Path
 import random
 from collections import defaultdict
 
 random.seed(42)
 
-pool = json.load(open("question_pool.json", encoding="utf-8"))
+HERE = Path(__file__).resolve().parent
+pool = json.load(open(HERE / "question_pool.json", encoding="utf-8"))
 
 
 def template_tag(p):
@@ -115,5 +117,5 @@ print("已選數量:", len(selected))
 print(Counter(p["type"] for p in selected))
 print("DLC 分布:", Counter(p["dlc"] for p in selected))
 
-with open("curated_60.json", "w", encoding="utf-8") as f:
+with open(HERE / "curated_60.json", "w", encoding="utf-8") as f:
     json.dump(selected, f, ensure_ascii=False, indent=2)
