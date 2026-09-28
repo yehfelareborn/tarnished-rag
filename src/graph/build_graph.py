@@ -257,6 +257,18 @@ ALIASES = {norm(k): norm(v) for k, v in {
     "Perfumer Tricia": "Perfumer Tricia and Misbegotten Warrior",
 }.items()}
 
+# bosses.csv 地點欄的整串別名（使用者確認）：優先於掃描，否則會先掃到較短的名稱（Jagged Peak 區域）而誤連
+LOCATION_ALIASES = {norm(k): v for k, v in {
+    "Jagged Peak Foothills": "Foot of the Jagged Peak",
+}.items()}
+
+# 地點欄整串掃描後剩下的字串，經使用者確認的處理：對到既有區域，或建 Location stub（該地點不在 locations.csv）。
+# 不在這張表裡的殘留字串一律記到 graph_unmatched.csv（kind=boss_location_leftover），不無聲丟掉。
+LEFTOVER_PLACES = {norm(k): v for k, v in {
+    "Liurnia": ("Region", "Liurnia of the Lakes"),               # Patches 在 Liurnia 也是 NPC
+    "Specimen Storehouse": ("stub", "Specimen Storehouse"),      # Shadow Keep 內的獨立地點
+}.items()}
+
 
 def candidates(text):
     """只做明確的清理，不做語意猜測：去 HTML 實體、去頭尾數量、去尾端短括號註解、去『Gateway:』這類前綴、去 Ashes 後綴。"""
@@ -327,8 +339,9 @@ def stub(label, text, source, dlc=0, **props):
     return uid
 
 
-def _scan_places(text, min_len=6):
-    """在整串文字中掃描已知的地點／區域名（長的優先、互不重疊；名稱本身含逗號也能對到）。"""
+def _scan_places(text, min_len=6, return_rest=False):
+    """在整串文字中掃描已知的地點／區域名（長的優先、互不重疊；名稱本身含逗號也能對到）。
+    return_rest=True 時多回傳掃描後剩下沒對上的字串（已正規化）。"""
     rest = f" {norm(text)} "
     names = sorted([(k, "Location") for k in label_index["Location"]] + [(k, "Region") for k in label_index["Region"]],
                    key=lambda x: len(x[0]), reverse=True)
@@ -340,21 +353,42 @@ def _scan_places(text, min_len=6):
         if pat in rest:
             out.append((label_index[lab][n][0], "substring" if lab == "Location" else "region"))
             rest = rest.replace(pat, " # ")
+    if return_rest:
+        return out, re.sub(r"\s+", " ", rest.replace("#", " ")).strip()
     return out
 
 
-def resolve_location(text):
-    """精確 → 區域 → 整串掃描（含逗號的地點名也能對到）→ 逗號切段的精確比對（後備）。回傳 [(uid, how)]。"""
+def resolve_location(text, ctx="", src="", dlc=0):
+    """別名 → 精確 → 區域 → 整串掃描（含逗號的地點名也能對到；剩下的字串依 LEFTOVER_PLACES 處理，其餘記錄）
+    → 逗號切段的精確比對（後備）。回傳 [(uid, how)]。ctx／src／dlc 只用在殘留字串的記錄與建 stub。"""
     text = re.sub(r"<[^>]+>", "", html.unescape(text))
     key = norm(text)
+    if key in LOCATION_ALIASES:
+        target = label_index["Location"].get(norm(LOCATION_ALIASES[key]))
+        if target:
+            stats["resolved_alias"] += 1
+            fuzzy_log.append({"how": "alias", "text": text.strip(), "matched_to": node_props[target[0]]["name"], "label": "Location"})
+            return [(target[0], "alias")]
     hit = label_index["Location"].get(key)
     if hit:
         return [(hit[0], "exact")]
     reg = label_index["Region"].get(key)
     if reg:
         return [(reg[0], "region")]
-    out = _scan_places(text)
+    out, rest = _scan_places(text, return_rest=True)
     if out:
+        for lk, (kind, target) in LEFTOVER_PLACES.items():
+            if f" {lk} " in f" {rest} ":
+                if kind == "Region":
+                    u = label_index["Region"][norm(target)][0]
+                    stats["resolved_alias"] += 1
+                    fuzzy_log.append({"how": "alias", "text": lk, "matched_to": node_props[u]["name"], "label": "Region"})
+                    out.append((u, "region"))
+                else:
+                    out.append((stub("Location", target, src, dlc), "stub"))
+                rest = re.sub(r"\s+", " ", f" {rest} ".replace(f" {lk} ", " ")).strip()
+        if rest:
+            log_unmatched("boss_location_leftover", ctx, rest, src)   # 掃描後仍沒對上的字串，不無聲丟掉
         return out
     for p in (p for p in re.split(r"[,;]", text) if p.strip()):
         pk = norm(p)
@@ -472,7 +506,7 @@ def build_edges(loc_rows):
                     runes = runes or num(re.sub(r"[^\d]", "", it))
                 else:
                     drops.append(it)
-            locs = resolve_location(loc_key)
+            locs = resolve_location(loc_key, ctx=f"{r['name']} @ {loc_key.strip()}", src=src, dlc=bdlc)
             loc_name = loc_key.strip().rstrip(":").strip()
             clean_loc = re.sub(r"<[^>]+>", "", html.unescape(loc_key)).strip().rstrip(":").strip()
             if not locs and clean_loc:

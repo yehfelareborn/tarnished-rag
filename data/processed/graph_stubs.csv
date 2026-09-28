@@ -2,6 +2,7 @@ label,name,source_file
 Location,Ancient Ruins of Rauh,data/processed/dlc_scrape/bosses.csv
 Location,Scadutree Base,data/processed/dlc_scrape/bosses.csv
 Location,Church of the Bud,data/processed/dlc_scrape/bosses.csv
+Location,Specimen Storehouse,data/processed/dlc_scrape/bosses.csv
 Location,Crumbling Farum Azula,data/processed/dlc_scrape/bosses.csv
 Location,Stone Platform,data/processed/dlc_scrape/bosses.csv
 Location,Recluses' River,data/processed/dlc_scrape/bosses.csv

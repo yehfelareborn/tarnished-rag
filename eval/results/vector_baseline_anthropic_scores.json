@@ -30,7 +30,7 @@
   "relational": {
     "n_questions": 22,
     "n_judged": 22,
-    "answer_accuracy": 1.0,
+    "answer_accuracy": 0.9772727272727273,
     "retrieval_recall_at_5": 1.0,
     "unanswerable_refusal_rate": null
   },

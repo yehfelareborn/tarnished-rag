@@ -352,6 +352,21 @@ def _plist(s):
         return []
 
 
+# 使用者（玩過遊戲）逐條確認正確、但兩邊說法不同的 Boss↔地點（原 B3 5 條，加上 Golem 那串每個地點）。
+# 補進 locations.csv 該地點的 bosses 清單；不套用「creature／npc 同名就略過」的規則，因為是明確確認過的。
+# Golem：bosses.csv 寫 'Stormhill Castle Morne Ainsel River Well Leyndell, Royal Capital Mountaintops of the Giants'，
+#   使用者確認每個地點都有（Leyndell, Royal Capital 已有；Mountaintops of the Giants 在 locations.csv 只是區域、沒有地點列）
+CONFIRMED_BOSS_LOCATIONS = [
+    ("Spiritcaller Snail", "Spiritcaller Cave"),        # bosses.csv 拼成 "Spiritcaller's Cave"
+    ("Mimic Tear", "Hidden Path to the Haligtree"),
+    ("Messmer the Impaler", "Shadow Keep"),
+    ("Base Serpent Messmer", "Shadow Keep"),
+    ("Golem", "Stormhill"),                              # locations.csv 把 Golem 列在 creatures（原 B1 略過）
+    ("Golem", "Castle Morne"),
+    ("Golem", "Ainsel River Well"),                      # 同上，原 B1 略過
+]
+
+
 def align_boss_locations() -> None:
     """讓 bosses.csv 與 locations.csv 對 Boss↔地點 的說法對齊（使用者決定的 A1、B4 兩類）。
 
@@ -361,8 +376,9 @@ def align_boss_locations() -> None:
     A1：locations.csv 的 `bosses` 清單列了，但 bosses.csv 沒有這隻 boss 的列
         → 在 bosses.csv 補一列（只有名稱與地點，沒有 HP 等資料；dlc 沿用地點的 dlc）。
 
-    不動 B3（地點是從黏在一起的多地點字串推得）與 A2（bosses.csv 有這隻但地點文字沒寫這裡），
-    這兩類使用者要自己檢視。每一項變更都記錄到 data/processed/alignment_changes.csv。
+    使用者逐條檢視並確認正確的（原 B3 與 Golem 那串），列在 CONFIRMED_BOSS_LOCATIONS，同樣補進地點的 `bosses` 清單。
+    不動 A2（bosses.csv 有這隻但地點文字沒寫這裡），使用者還沒檢視。
+    每一項變更都記錄到 data/processed/alignment_changes.csv。
     """
     bpath, lpath = OUT / "bosses.csv", OUT / "locations.csv"
     with bpath.open(encoding="utf-8", newline="") as f:
@@ -387,6 +403,17 @@ def align_boss_locations() -> None:
             lst.append(_base(br["name"]))
             L["bosses"] = repr(lst)
             changes.append(("B4_add_boss_to_location_list", br["name"], L["name"]))
+
+    # ---- 使用者確認清單（原 B3 等）----
+    loc_by_name = {r["name"]: r for r in locs}
+    for boss, loc in CONFIRMED_BOSS_LOCATIONS:
+        L = loc_by_name[loc]        # 找不到地點就直接報錯，不默默略過
+        lst = _plist(L["bosses"])
+        if any(_same(boss, x) for x in lst):
+            continue
+        lst.append(boss)
+        L["bosses"] = repr(lst)
+        changes.append(("CONFIRMED_add_boss_to_location_list", boss, loc))
 
     # ---- A1 ----
     def _names(path):
@@ -430,7 +457,8 @@ def align_boss_locations() -> None:
         w = csv.writer(f); w.writerow(["kind", "boss", "location"]); w.writerows(changes)
     from collections import Counter
     c = Counter(k for k, _, _ in changes)
-    print(f"align_boss_locations: B4 補進地點清單 {c['B4_add_boss_to_location_list']} 筆；A1 補 bosses.csv {len(added)} 列（{c['A1_add_boss_row']} 條地點關係）；"
+    print(f"align_boss_locations: B4 補進地點清單 {c['B4_add_boss_to_location_list']} 筆；使用者確認清單補進 {c['CONFIRMED_add_boss_to_location_list']} 筆；"
+          f"A1 補 bosses.csv {len(added)} 列（{c['A1_add_boss_row']} 條地點關係）；"
           f"A1 跳過（同名 npc/creature）{c['A1_skipped_same_name_npc_or_creature_exists']}、（合併列的一員）{c['A1_skipped_part_of_existing_boss_row']}")
 
 

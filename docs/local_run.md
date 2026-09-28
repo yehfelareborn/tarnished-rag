@@ -25,15 +25,17 @@
 | 題型 | 題數 | 答案正確率（原判定） | 稽核修正後 | 檢索 recall@5 |
 |---|---|---|---|---|
 | single_fact | 22 | 1.000 | 1.000 | 1.000 |
-| relational | 22 | 1.000 | 1.000 | 1.000 |
+| relational | 22 | 1.000 | **0.977** | 1.000 |
 | numeric | 22 | 0.955 | 0.955 | 0.955 |
 | comparison | 10 | 0.900 | 0.900 | 0.950 |
 | false_premise | 6 | 0.833 | 0.833 | 0.583 |
 | multi_hop | 18 | 0.778 | **0.722** | 0.815 |
 | unanswerable | 6 | 1.000 | 1.000 | — |
-| **全部** | 106 | 0.934 | **0.925** | |
+| **全部** | 106 | 0.934 | **0.920** | |
 
 「稽核修正後」是把 q08 由 correct 改為 wrong 的結果，**已寫回**評分檔並重跑 `run_eval.py score`（`vector_baseline_scores.json` 現在就是這一欄的數字；「原判定」欄是修正前的數字，見下方「判定的可信度」）。
+
+**2026-09-28 補記（q60）**：Boss↔地點資料對齊後，q60（Belurat Tower Settlement 有哪些 boss）的標準答案由一隻改為兩隻（加上 Ulcerated Tree Spirit，使用者依遊戲知識確認）。本次跑的是舊資料與舊索引，模型只答 Divine Beast Dancing Lion，因此 q60 由 correct 重判為 partial（重判者為 Claude，非人工）。這個變動只反映在「稽核修正後」欄（relational 1.000 → 0.977、全部 0.925 → 0.920）；「原判定」欄保留為歷史數字，未追溯更動，所以兩欄之間 relational 的差異來自 q60，不是稽核。
 
 只看檢索的 recall@k（`eval/retrieval_only.py`，top-10）：
 
@@ -58,7 +60,7 @@
 
 ## 答錯的題
 
-原評分檔中 6 題 wrong、2 題 partial：
+原評分檔中 6 題 wrong、2 題 partial（另加 q60 重判的 1 題 partial，見表末）：
 
 | 題 | 題型 | 現象 |
 |---|---|---|
@@ -70,6 +72,7 @@
 | q89 | comparison | 沒撈到 Fire Giant 的文件，只能講 Radahn 的 HP |
 | q97 | false_premise | partial：答了 Legacy Dungeons 區域，但沒明確指出「Stormveil Castle 不是 DLC」|
 | q100 | false_premise | partial：指出 Ensha 是 NPC 不是 boss，但沒說到 Roundtable Hold |
+| q60 | relational | partial（2026-09-28 重判）：標準答案更新為兩隻，模型只答 Dancing Lion 並說「the only boss」；舊索引撈到的資料本來就沒有 Ulcerated Tree Spirit |
 
 觀察：
 - 多跳題的錯誤多半出在「題目沒直接寫出關鍵實體」（例如「某地點的 boss」），撈到地點文件卻沒撈到 boss 文件。q77、q84 沒逐一驗證是否同因

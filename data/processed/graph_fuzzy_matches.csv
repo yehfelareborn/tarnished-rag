@@ -1,6 +1,7 @@
 how,text,matched_to,label
 cleaned,"Talisman Pouch (NG only, Margit not defeated)",Talisman Pouch,Item
 cleaned,Scadutree Fragment x2,Scadutree Fragment,Item
+alias,Jagged Peak Foothills,Foot of the Jagged Peak,Location
 cleaned,"Talisman Pouch (NG only, Morgott not defeated)",Talisman Pouch,Item
 cleaned,Viridian Amber Medallion +1,Viridian Amber Medallion +1 Variant,Talisman
 cleaned,"5,000, Dragon Heart",Dragon Heart,Item
@@ -29,6 +30,7 @@ cleaned,"80,000, Dragon Heart",Dragon Heart,Item
 cleaned,"14,000, Dragon Heart",Dragon Heart,Item
 cleaned,Talisman Pouch (NG Only),Talisman Pouch,Item
 cleaned,Dragon Heart x3,Dragon Heart,Item
+alias,liurnia,Liurnia of the Lakes,Region
 cleaned,Golden Rune [1] x2,Golden Rune [1],Item
 cleaned,Walkway: Rotten Staff,Rotten Staff,Weapon
 cleaned,Gateway: Lord's Rune,Lord's Rune,Item

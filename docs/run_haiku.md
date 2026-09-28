@@ -34,22 +34,25 @@
 | 題型 | 題數 | 答案正確率 | 檢索 recall@5 |
 |---|---|---|---|
 | single_fact | 22 | 1.000（22/22）| 1.000 |
-| relational | 22 | 1.000（22/22）| 1.000 |
+| relational | 22 | 0.977（21.5/22）| 1.000 |
 | numeric | 22 | 0.955（21/22）| 0.955 |
 | comparison | 10 | 0.850（8.5/10）| 0.950 |
 | multi_hop | 18 | 0.833（15/18）| 0.815 |
 | false_premise | 6 | 0.833（5/6）| 0.583 |
 | unanswerable | 6 | 1.000（6/6）| — |
-| **全部** | 106 | **0.939**（99.5/106）| |
+| **全部** | 106 | **0.934**（99/106）| |
+
+**2026-09-28 更新（q60）**：原本 relational 1.000、全部 0.939（99.5/106）。Boss↔地點資料對齊後，q60（Belurat Tower Settlement 有哪些 boss）的標準答案由一隻改為兩隻（加上 Ulcerated Tree Spirit，使用者依遊戲知識確認）；這次跑的是舊資料與舊索引，模型只答 Divine Beast Dancing Lion，所以 q60 由 correct 重判為 partial（重判者為 Claude，非人工），上表已反映。
 
 recall@5 是檢索端的數字：檢索與其他輪完全一致（106 題 top-5 清單逐題比對相同），直接沿用。分數已用 `run_eval.py score` 重算驗證，與依判定檔手算的結果完全一致（輸出在 `eval/results/vector_baseline_anthropic_scores.json`）。
 
-分數以外的判定結果：5 題 wrong、3 題 partial，其餘 98 題 correct。
+分數以外的判定結果：5 題 wrong、4 題 partial，其餘 97 題 correct。
 
 | 題 | 題型 | 判定 | 原因 |
 |---|---|---|---|
 | q09 | multi_hop | wrong | 答「資料沒有」，沒撈到 Rykard 的文件，無法比較 HP |
 | q49 | numeric | wrong | 答「資料沒有」，檢索只撈到 `+1 Variant`，沒撈到 `+2 Variant` |
+| q60 | relational | partial | 標準答案更新為兩隻（Divine Beast Dancing Lion、Ulcerated Tree Spirit），只答了前者；舊索引撈到的資料本來就沒有 Ulcerated Tree Spirit（2026-09-28 重判，原判 correct）|
 | q76 | multi_hop | wrong | 答「無法確定」，沒撈到 Rykard 的紀念品文件 |
 | q77 | multi_hop | wrong | 答「資料沒有」，撈到的都是其他 boss 的紀念品，沒有 Malenia 的 |
 | q89 | comparison | wrong | 答「資料沒有」，沒撈到 Fire Giant 的 HP 文件 |

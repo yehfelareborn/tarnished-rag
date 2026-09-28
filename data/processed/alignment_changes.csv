@@ -19,6 +19,13 @@ B4_add_boss_to_location_list,Nox Swordstress & Nox Monk,"Sellia, Town of Sorcery
 B4_add_boss_to_location_list,Putrid Avatar,Minor Erdtree (Caelid)
 B4_add_boss_to_location_list,Putrid Tree Spirit,Elphael Brace of the Haligtree
 B4_add_boss_to_location_list,Wormface,Minor Erdtree (Mt. Gelmir)
+CONFIRMED_add_boss_to_location_list,Spiritcaller Snail,Spiritcaller Cave
+CONFIRMED_add_boss_to_location_list,Mimic Tear,Hidden Path to the Haligtree
+CONFIRMED_add_boss_to_location_list,Messmer the Impaler,Shadow Keep
+CONFIRMED_add_boss_to_location_list,Base Serpent Messmer,Shadow Keep
+CONFIRMED_add_boss_to_location_list,Golem,Stormhill
+CONFIRMED_add_boss_to_location_list,Golem,Castle Morne
+CONFIRMED_add_boss_to_location_list,Golem,Ainsel River Well
 A1_add_boss_row,Swordhand of Night Anna,Cathedral of Manus Metyr
 A1_add_boss_row,Swordhand of Night Jolan,Cathedral of Manus Metyr
 A1_skipped_same_name_npc_or_creature_exists,Fire Knight Queelign,Church of the Crusade

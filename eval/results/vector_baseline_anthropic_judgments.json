@@ -7,6 +7,7 @@
   "overrides": {
     "q09":  {"judgment": "wrong",   "note": "答『資料沒有』，但 Rykard 與 Malenia 的 HP 資料都存在；沒撈到 Rykard 的文件"},
     "q49":  {"judgment": "wrong",   "note": "答『資料沒有』；檢索只撈到 +1 Variant，沒撈到 +2 Variant"},
+    "q60":  {"judgment": "partial", "note": "2026-09-28 重判：標準答案更新為兩隻（Divine Beast Dancing Lion、Ulcerated Tree Spirit），模型只答了 Dancing Lion；當時舊索引撈到的資料沒有 Ulcerated Tree Spirit。原判 correct"},
     "q76":  {"judgment": "wrong",   "note": "答『無法確定』；沒撈到 Rykard 的紀念品文件"},
     "q77":  {"judgment": "wrong",   "note": "答『資料沒有』；檢索結果（Elphael、Lichdragon、Elden、Haligtree Knight、Black Blade 的紀念品）沒有 Malenia 的紀念品文件"},
     "q89":  {"judgment": "wrong",   "note": "答『資料沒有』；沒撈到 Fire Giant 的 HP 文件"},
@@ -21,11 +22,11 @@
   "scores_by_hand": {
     "single_fact": "22/22 = 1.000",
     "numeric": "21/22 = 0.955",
-    "relational": "22/22 = 1.000",
+    "relational": "21.5/22 = 0.977（q60 重判 partial 後）",
     "multi_hop": "15/18 = 0.833",
     "comparison": "8.5/10 = 0.850",
     "false_premise": "5/6 = 0.833",
     "unanswerable": "6/6 = 1.000",
-    "overall": "99.5/106 = 0.939"
+    "overall": "99/106 = 0.934（q60 重判 partial 後；原 99.5/106 = 0.939）"
   }
 }
