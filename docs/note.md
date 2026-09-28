@@ -111,3 +111,98 @@ S4 的查詢工具回傳 `Remembrance of theBlasphemous` 時發現 `remembrances
 | armors.csv | 723 | 723 | dlc 編碼統一為 0/1 |
 | incantations.csv | 129 | 129 | dlc 編碼統一為 0/1 |
 | items/keyItems.csv | 121 | 121 | — |
+
+---
+
+# S1～S4 遇到的困難與實際改動（2026-09-28～29 整理）
+
+上面是 S0 的資料清理。這一章記 S1（題庫）到 S4（圖查詢工具）過程中遇到的困難，重點是**實際改了什麼**。每項寫「困難 → 實際改動 → 結果」；細節與數字以各項標的文件為準（`docs/graph-schema.md`、`docs/graph-tools.md`、`docs/local_run.md`、`docs/run_haiku.md`）。
+
+## S1～S2：題庫與向量基準線
+
+**評分檔的來源與可信度**
+- 困難：Qwen 基準線的評分檔不是我產生的，而是同一個 session 被兩個終端機同時 resume 時，另一個 Claude Code 行程用 `eval/draft_judgment.py`（字詞重疊自動初判）產生並自行複查，**沒有人工判定**。
+- 實際改動：稽核後發現 q08 判錯（標準答案 Ensha，模型答「沒有人同時是 NPC 和 boss」卻被判 correct），改為 wrong 並寫回評分檔、重跑 `run_eval.py score`（Qwen 整體 0.934 → 0.925）。Haiku 那次的判定由 Claude 逐題對照標準答案判定，明確標「非人工」（`vector_baseline_anthropic_judgments.json`）。`docs/local_run.md` 新增「判定的可信度」一節。
+
+**可攜性與公開 repo**
+- 困難：第一次推 GitHub 前發現 `.gitignore` 不存在，`generate_questions.py` 有本機絕對路徑。
+- 實際改動：補 `.gitignore`（`.env` 等）；`generate_questions.py` 改成相對路徑；`data/raw/README.md` 補資料來源與授權；`.env`（API 金鑰、Neo4j 密碼）從未進入版本控制，推送前掃描過。
+
+## S3：建立知識圖譜
+
+**名稱比對誤連**
+- 困難：一開始有「名稱互相包含」的泛用比對，把 `X` 連到 `Lesser X`、`Fire Knight Queelign` 連到泛稱的 `Fire Knight`，誤連約 25 對。
+- 實際改動：移除該規則，改成有順序的比對（精確 → 清理後精確 → 別名表 → 去空白 → 錯字容忍 → 建 stub），別名表 19 組、錯字容忍要求相似度 ≥ 0.93 且數字一致、唯一候選；所有比對與 stub 都寫進 `graph_fuzzy_matches.csv`、`graph_stubs.csv`、`graph_unmatched.csv`。
+
+**把敵人誤升格成 boss**
+- 困難：我曾寫「`creatures`／`npcs` 欄位的名字若對到同名 Boss 就升格成 Boss 位於此地點」，誤升格 18 條（15 條來自 creatures、3 條來自 npcs），Volcano Manor 的 `Bloodhound Knight`、`Omenkiller` 被當成 boss，q06 多出 2 隻。
+- 實際改動：移除該規則，這兩個欄位的名字一律當 Creature／NPC，對不到就建 stub。q06 現在回傳的 5 隻與標準答案一致。
+
+**欄位混入不該有的東西**
+- `locations.csv` 的 `npcs`／`creatures` 欄位混進物品（38 筆）：改成「該物品位於此地點」的 `LOCATED_AT`，不建假 NPC。
+- 掉落物欄有符文範圍、表格殘渣、`Map Link`、`N/A` 等雜訊：加過濾規則，共略過 251 筆（符文範圍 150、其餘 101）。
+
+**多地點黏成一串、地點名稱含逗號**
+- 困難：`bosses.csv` 把多個地點寫成一串（`Murkwater Cave , Limgrave Liurnia Mt. Gelmir …`），地點名稱本身又含逗號（`Leyndell, Royal Capital`）。第一版碰到逗號只處理第一段；第二版逐段處理但把含逗號的名稱切壞。
+- 實際改動：`resolve_location` 改成**先對整串掃描已知的地點／區域名**，掃不到才退回逗號切段。之後發現掃描命中後剩下的字串會被無聲丟掉（`bosses.csv` 241 個地點欄 key 中有 4 個、3 種殘留文字：`Specimen Storehouse`、`Foothills`、`Liurnia`），再加 `LOCATION_ALIASES`（`Jagged Peak Foothills` → `Foot of the Jagged Peak`）、`LEFTOVER_PLACES`（`Liurnia` → 區域、`Specimen Storehouse` → 建 Location stub），其他殘留一律記到 `graph_unmatched.csv`（`boss_location_leftover`，目前 0 筆）。
+
+**同一角色依地點有不同身分（Patches）**
+- 實際改動：`build_graph.py` 的 `BOSS_ONLY_AT`，Patches 只在 Murkwater Cave 是 Boss，其他地點（Volcano Manor、The Shaded Castle、Limgrave、Mt. Gelmir、Liurnia of the Lakes）改掛在同名 NPC 節點上。
+
+**`bosses.csv` 與 `locations.csv` 對 Boss↔地點的說法不一致**
+- 困難：兩個檔案各記了一個方向，實際上對不上（分成 A1、A2、B1～B4 六類）。
+- 實際改動：
+  - Boss 的 `LOCATED_AT` 邊加 `sources` 屬性標明是哪個檔案說的，並寫唯讀稽核腳本 `src/graph/audit_boss_locations.py`。
+  - **A1／B4 對齊**（`clean_raw.py` 的 `align_boss_locations`，使用者裁決）：B4 補 20 筆進地點的 boss 清單；A1 在 `bosses.csv` 補 9 列（10 條關係）；另有 9 個名稱刻意跳過（8 個在 `npcs.csv`／`creatures.csv` 已有同名實體、1 個是合併列的成員）。全部記在 `data/processed/alignment_changes.csv`。
+  - **B1**：`locations.csv` 把它列成 creature 的，不建 Boss 邊（`boss_edge_skipped_creature_here`，7 → 5 條）；**Golem 是使用者確認的例外**。
+  - **B2**：Dryleaf Dane 維持原樣（特例）。
+  - **B3**：使用者逐條確認 5 條正確，連同 Golem 那串每個地點，共 7 筆放進 `CONFIRMED_BOSS_LOCATIONS`。
+- 結果：兩邊都有 143 → 184；A1 19 → 8；A2 54 → 53。
+- 我自己寫的 bug：A1 迴圈只記了新增列的第一個地點（`Stray Mimic Tear` 漏了第二個），已修。
+
+**兩場戰鬥被接在同一列（Perfumer Tricia／Misbegotten Warrior）**
+- 實際改動：見上方 `bosses.csv`「地點與掉落物欄位」一節。`BOSS_LOCATION_FIXES` 把兩場戰鬥各放回自己那一列，原本被當雜訊丟掉的 Perfumer Tricia（召喚灰燼）掉落進圖（`DROPS` 1309 → 1310）。
+
+**題庫標準答案被資料對齊影響（q60）**
+- 困難：B4 對齊把 Ulcerated Tree Spirit 補進 Belurat Tower Settlement 的 boss 清單，題庫標準答案（取自對齊前的 `locations.csv`）只有一隻。
+- 實際改動：使用者依遊戲知識確認 Belurat 確實有這隻，`eval/questions.jsonl` q60 改為兩隻；兩個基準線對 q60 重判為 partial（原 correct，重判者為 Claude、非人工）。relational 1.000 → 0.977；Qwen 整體 0.925 → 0.920、Haiku 0.939 → 0.934。同時逐題掃描其他 9 題提到被動過實體的題目，標準答案都沒被波及。
+
+## S4：圖查詢工具
+
+**實體連結漏掉所有格**
+- 困難：`link_entities` 把撇號去掉，`Volcano Manor's` 變成 `volcano manors`，對不到 `volcano manor`，q09 漏掉一個地點。
+- 實際改動：名稱後面多一個 `s` 也算命中。單元測試拿掉這個修正時 `test_link_entities_q09` 確實失敗，證明測試抓得到。
+
+**工具不認得別名**
+- 困難：題庫 q75 用 `Rennala, Queen of the Full Moon`，圖裡 Boss 叫 `Rennala Carian Queen of the Full Moon`，只有 NPC 叫問句那個名字，別名只存在建圖腳本裡。
+- 實際改動：`build_graph.py` 新增 `attach_aliases()`，把別名表寫成節點的 `aliases` 屬性，工具只讀圖；`link_entities` 把精確、別名、去括號、簡稱各層的候選合併。
+
+**題庫檢查第一次 27 PASS、9 FAIL**
+- 逐一查因：1 題是工具缺口（q75，已修）、1 題是圖的缺口（q08，Ensha 的 NPC 與 Boss stub 名稱不同，沒有 SAME_AS）、其餘 7 題是我的檢查腳本太死板（名稱拼法、括號、`Ash of War:` 前綴、用名稱判斷紀念品）。修正檢查腳本後 relational 22／22、multi_hop 13 過、1 失敗（q08）、4 跳過。q08 我保留為失敗，沒有放寬檢查去遷就。
+
+**同名 Item 節點**
+- 困難：同名 Item 有 43 組、87 個節點（一開始用小寫名稱比對只找到 36 組，漏掉名稱只差空格或引號、以及 5 個黏字紀念品）。多數是不同分類檔各記同一個物品的一部分（例如 `consumables.csv` 記 Remembrance 的效果、`remembrances.csv` 記兌換選項與 boss），造成 `get_neighbors` 回兩個同名物品，其中一個常常是沒有邊的空殼。
+- 實際改動：`build_graph.py` 新增 `merge_duplicate_items()`，節點建好後、建邊之前合併，44 個節點併入保留者（Item 965 → 921，節點 3861，邊數不變）。保留誰依 `ITEM_PRIORITY`；缺的欄位補上、衝突的欄位值存進 `merged_variants`、來源分類存進 `item_types`、拼法不同的名稱存進 `aliases`、被併掉的 uid 存進 `merged_from`；稽核檔 `data/processed/graph_item_merges.csv`（44 列）。Lord of Blood's Favor（浸血前後）與 Unalloyed Gold Needle（斷掉 → 修復 → Millicent）我原本當成不同物品排除，使用者確認是同一物品的不同狀態後也合併了。
+- 限制：合併節點的 `usage`／`location` 只反映保留者那個狀態，其他狀態在 `merged_variants` 的 JSON 字串裡。
+
+**`dlc` 標記與黏字**
+- Larval Tear（`keyItems.csv` id=6）`dlc` 1 → 0（使用者確認是本篇；它的地點說明開頭是 DLC 地點，被誤標）。
+- 黏字掃描 `data/raw` 全部 29 個 CSV：修 3 處小字接大寫（`ofReeds`、`andQuest`、`aBanished`，`fix_glued_text()`，新增 `npcs.csv`、`skills.csv` 的 processed 版）；**5 個紀念品名稱黏字（`theBlasphemous` 等）依使用者決定不動、只記錄**；另有 2 處 `theX` 在描述文字、1247 處句號後沒空格、1 處小寫接小寫（`criticalhit`），沒動。見上方「黏字」一節。
+
+**我寫的 `clean_raw.py` 新函式第二次執行會報錯**
+- 困難：`fix_glued_text()` 讀檔規則是「processed 有就讀 processed」，`npcs.csv`、`skills.csv` 的 processed 版只是上一次執行的成品，第二次讀到已修好的版本，原字串已不存在而報錯，中斷後面的步驟。上一輪我只從乾淨狀態跑了一次，沒有發現。
+- 實際改動：只有 `armors.csv`（同一次執行裡前一步剛產生）讀 processed（`PROCESSED_FIRST`），其他檔案一律從 raw 出發。用「連跑兩次比對 10 個 processed 檔案的雜湊」驗證結果完全相同。
+
+## 流程與環境
+
+- **Bash 工具在 auto mode 下反覆失敗**（`auto mode classifier gave no verdict`，是伺服器端安全檢查暫時沒回應，跟指令內容無關；同一支腳本失敗兩次、不改內容後又成功過）。改做法：需要跑指令時我貼 `!` 指令請使用者跑再貼回輸出；2026-09-29 使用者授權本地 `git commit` 我可以自己跑，push 與打 tag 仍先問。這個偏好存在我的記憶檔，不在 repo 裡。
+- **背景建置**：我曾說背景執行的建置在退出 session 後還會繼續，實際不會，改用 `nohup setsid` 重新啟動。
+- **金鑰**：API 金鑰與 Neo4j 密碼只在被 `.gitignore` 排除的 `.env`；Kaggle token 只暫時使用；推送前掃過 repo。
+
+## 至今還沒處理的（見 `docs/graph-schema.md` 待決定）
+
+- NPC／Boss 沒有 SAME_AS（Ensha、q08 因此失敗）。
+- 同一對節點之間有兩條同類型的邊（例如 Malenia → Remembrance of the Rot Goddess 兩條 `DROPS`）。
+- 「地點標題黏在掉落物後面而被當雜訊丟掉」在其他 boss 列有沒有，還沒掃。
+- A2 的 53 條、232 個 stub 保留與否、語料庫是否去重。
+- **向量索引與兩個基準線是舊資料**（語料庫 3649 篇，索引是 3640 篇），S6 前要重建並重跑。
