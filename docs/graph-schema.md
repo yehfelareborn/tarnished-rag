@@ -4,11 +4,11 @@
 
 原則：只用結構化欄位建圖，不用 LLM 抽取；每個節點與邊都帶 `source_file`（邊多帶來源欄位資訊）；所有節點帶 `dlc`（0／1）。所有節點另掛一個共用標籤 `Entity`，有唯一 `uid` 與 `name` 索引。
 
-## 節點（共 3864 個，其中 233 個是 stub）
+## 節點（共 3861 個，其中 233 個是 stub）
 
 | 標籤 | 節點數 | 其中 stub | 來源 | 主要屬性 |
 |---|---|---|---|---|
-| `Item` | 924 | 131 | items/*.csv 的 13 個子類（同名的已合併，見下）| `item_type`（子類名）、effect、description、usage 等該子類有的欄位；合併過的另有 `merged_from`、`item_types`、`merged_variants` |
+| `Item` | 921 | 131 | items/*.csv 的 13 個子類（同名的已合併，見下）| `item_type`（子類名）、effect、description、usage 等該子類有的欄位；合併過的另有 `merged_from`、`item_types`、`merged_variants` |
 | `Armor` | 723 | 0 | armors.csv | slot、weight、damage_negation、resistance、special_effect、how_to_acquire |
 | `Weapon` | 403 | 1 | weapons.csv | category、damage_type、weight、passive_effect、skill、`str/dex/int/fai/arc`（由 `requirements` 拆開）|
 | `Location` | 298 | 12 | locations.csv | description |
@@ -29,10 +29,10 @@
 - **Region 是節點**（不是 Location 的屬性）
 - **符文數放 `LOCATED_AT` 邊、掉落物在 `DROPS` 邊上標 `at_location`**：因為 boss 有多個戰鬥地點時，每個地點的符文與掉落都不同（例如 Magma Wyrm 在 4 個地點各有不同的符文與掉落物），放在節點會蓋掉差異
 - **別名寫進節點的 `aliases` 屬性**（`build_graph.attach_aliases`，S4 加的）：把 `ALIAS_TEXT` 與 `LOCATION_ALIAS_TEXT` 兩張別名表寫到目標節點上（字串陣列），讓查詢工具只讀圖就認得別名，例如 Boss `Rennala Carian Queen of the Full Moon` 帶有 `aliases: ['Rennala, Queen of the Full Moon']`。不影響節點與邊的數量，只多一個屬性
-- **同名 Item 合併**（`build_graph.merge_duplicate_items`，S4 加的；使用者 2026-09-28 決定）：以 `norm(name)` 分組，同名的 Item 節點合成一個，共 **41 組、41 個重複節點併入**（Item 965 → 924，全部節點 3905 → 3864）。原因是不同分類檔各記了同一個物品的一部分（例如 `consumables.csv` 記 Remembrance 的效果、`remembrances.csv` 記兌換選項與 boss），或同一個檔案把同一列寫了兩次。
+- **同名 Item 合併**（`build_graph.merge_duplicate_items`，S4 加的；使用者 2026-09-28 決定）：以 `norm(name)` 分組，同名的 Item 節點合成一個，共 **43 組全部合併、44 個重複節點併入**（Item 965 → 921，全部節點 3905 → 3861）。原因是不同分類檔各記了同一個物品的一部分（例如 `consumables.csv` 記 Remembrance 的效果、`remembrances.csv` 記兌換選項與 boss），或同一個檔案把同一列寫了兩次。
   - **做法**：節點建好後、建邊之前合併，後面所有名稱比對就只會找到保留的那個，所以邊的數量不變（6598）。保留誰：依 `ITEM_PRIORITY`（remembrances、greatRunes、keyItems、tools … consumables 最後），同來源取列號最小的。
-  - **不丟資料**：保留者缺的欄位用被併掉的補上（例如紀念品補上 `effect`）；兩份都有值但不同的欄位（13 組，多半是描述文字微調，例如 `zei・jyaku` 與 `zeijyaku`），保留者的值不變、另一份的值記在 `merged_variants`（JSON 字串）；被併掉的 uid 記在 `merged_from`，所有來源分類記在 `item_types`；拼法不同的名稱記在 `aliases`（共 9 個：正確拼法的 `Remembrance of the Blasphemous` 等 5 個黏字紀念品，以及引號空格或大小寫不同的 `Prattling Pate` 系列 4 個）。每個被併掉的節點一列寫到 `data/processed/graph_item_merges.csv`。
-  - **不合併的 2 組**：`Lord of Blood's Favor`（keyItems 45／46：白布與染紅的布，`location`、`usage` 完全不同）、`Unalloyed Gold Needle`（keyItems 40／41／42：完整、斷掉、修復三種狀態）。同名但是不同物品／任務狀態，硬併會把它們變成一個，待使用者判斷。
+  - **不丟資料**：保留者缺的欄位用被併掉的補上（例如紀念品補上 `effect`）；兩份都有值但不同的欄位（16 個被併節點有衝突：13 個多半是描述文字微調，例如 `zei・jyaku` 與 `zeijyaku`；另 3 個是同一物品的不同狀態，見下），保留者的值不變、另一份的值記在 `merged_variants`（JSON 字串）；被併掉的 uid 記在 `merged_from`，所有來源分類記在 `item_types`；拼法不同的名稱記在 `aliases`（共 9 個：正確拼法的 `Remembrance of the Blasphemous` 等 5 個黏字紀念品，以及引號空格或大小寫不同的 `Prattling Pate` 系列 4 個）。每個被併掉的節點一列寫到 `data/processed/graph_item_merges.csv`。
+  - **同一物品的不同狀態**（原本先排除、待使用者判斷，2026-09-29 使用者確認後也合併了）：`Lord of Blood's Favor`（keyItems 45／46，浸血前的白布與浸血後染紅的布）、`Unalloyed Gold Needle`（keyItems 40／41／42，斷掉 → 修復 → Millicent 身上取出的針）。原始資料每個狀態一列，名稱、圖片、`description` 都相同（`description` 本身就把各狀態都寫進去），只有 `usage`／`location` 不同。使用者確認它們是同一個物品在任務中的不同狀態，所以併成一個節點。**限制**：保留節點的 `usage`／`location` 只反映保留者那個狀態（Lord of Blood's Favor 是浸血前、Unalloyed Gold Needle 是 Millicent 那個），其他狀態的取得方式在 `merged_variants` 這個 JSON 字串裡，要讀那個屬性才看得到。`MERGE_EXCLUDE` 集合保留下來但目前是空的，之後若有真的不同的同名物品可以排除。
   - **已查**：題庫的 `source` 沒有指到被併掉的那一列；合併後 Rot Goddess 是單一節點，同時有 `DROPS` 與 `EXCHANGES_FOR`。
   - **一開始的數字要更正**：最早用小寫名稱比對只找到 36 組、73 個節點，漏掉名稱只差空格或引號的 2 組，以及 5 個黏字紀念品（`theBlasphemous` 與 `the Blasphemous` 不同）。用建圖的正規化名稱比才是 43 組、87 個節點。
 
@@ -73,7 +73,7 @@
 - `data/processed/graph_stubs.csv`：所有 stub（233 筆）
 - `data/processed/graph_unmatched.csv`：未命中與欄位污染記錄（44 筆：`column_contaminated` 38、`boss_is_creature_here` 5、`boss_location` 1；另有 `boss_location_leftover`＝地點欄掃描後的殘留字串，目前 0 筆）
 - `data/processed/alignment_changes.csv`：資料層 Boss↔地點對齊的每一筆變更（46 筆：B4 20、使用者確認清單 7、A1 新增 10、A1 跳過 9，見下）
-- `data/processed/graph_item_merges.csv`：同名 Item 合併的每個被併掉的節點（41 列）：保留的 uid、被併掉的 uid、兩邊的名稱、衝突欄位的兩份值（JSON）
+- `data/processed/graph_item_merges.csv`：同名 Item 合併的每個被併掉的節點（44 列）：保留的 uid、被併掉的 uid、兩邊的名稱、衝突欄位的兩份值（JSON）
 
 ## 建圖過程發現的資料問題
 
@@ -122,13 +122,13 @@
 - **掉落物欄位混有雜訊**：符文範圍（`40 - 1020 Runes`）、表格殘渣（`Stormveil Castle : 1,176`）、`Map Link`、`NPCs`、`???`、`To be added`、`N/A` 等，共 251 筆被略過（符文範圍 150、其餘雜訊 101）
 - **`locations.csv` 缺少 boss 資料引用的地點**：共 12 個，建了 Location stub：`Ancient Ruins of Rauh`、`Church District`、`Church of the Bud`、`Crumbling Farum Azula`、`Ellac River`、`Hinterland`、`Recluses' River`、`Scadutree Base`、`Scenic Isle`、`Specimen Storehouse`（Shadow Keep 內的獨立地點，使用者確認）、`Stone Platform`、`Three Sisters`
 
-## 孤立節點（807 個，21%）
+## 孤立節點（804 個，21%）
 
 沒有任何邊的節點。這不是 bug，是來源資料本來就沒有結構化的關係：
 
 | 標籤 | 孤立數 | 原因 |
 |---|---|---|
-| Item | 316 | 沒有任何 boss／creature 掉落、也沒出現在任何地點的物品清單。同名 Item 合併前是 356，少的 40 個是被併掉的孤立重複節點（總數 847 → 807，被併掉的 41 個裡只有 1 個原本有邊；其他標籤沒有變，所以這格是推算，沒有逐標籤重數）|
+| Item | 313 | 沒有任何 boss／creature 掉落、也沒出現在任何地點的物品清單。同名 Item 合併前是 356，少的 43 個是被併掉的孤立重複節點（總數 847 → 804，被併掉的 44 個裡只有 1 個原本有邊；其他標籤沒有變，所以這格是推算，沒有逐標籤重數）|
 | Armor | 288 | 取得方式在 `how_to_acquire` 自由文字裡，沒有結構化 |
 | Spell | 93 | 取得地點在 `location_text` 自由文字裡 |
 | Talisman | 42 | 同上，沒有結構化的取得關係 |
@@ -164,6 +164,6 @@
 6. 同一個角色在不同檔案分屬不同類別（例如 `Ensha` 既是 NPC 也是 boss stub、`Godefroy the Grafted` 同時有 NPC 與 Boss），目前是各自獨立的節點，沒有 `SAME_AS` 關係。A1 刻意跳過的 8 個名稱（Ensha、Fire Knight Queelign、Gurranq、Furnace Golem 等）也是這種情況
 7. 別名 `Perfumer Tricia`→`Perfumer Tricia and Misbegotten Warrior` 是我判斷的，未經使用者確認
 8. **5 個紀念品節點的名稱黏字**（S4 挖出來的）：`Remembrance of theBlasphemous`、`theLichdragon`、`theNaturalborn`、`theStarscourge`、`theDragonlord`，來源檔 `remembrances.csv` 的名稱本來就少了空格。建圖的 `norm()` 會修這類黏字所以比對沒問題，但節點名稱保留原樣，查詢工具會原樣回傳。**使用者決定不修**（2026-09-28），只記錄；同一次掃描的其他黏字與修正見 `docs/note.md`「黏字」一節
-9. **同名 Item 節點（已合併 41 組，2 組待決定）**（S4 挖出來的）：實際是 43 組、87 個節點（見上方「同名 Item 合併」）。使用者決定合併，已實作；`Lord of Blood's Favor`（2 份）與 `Unalloyed Gold Needle`（3 份）是同名但不同任務狀態的物品，**沒有合併，待使用者判斷**。原本的重複主要在 `consumables.csv` 與 `remembrances.csv`（9 組）、`tools.csv` 之間。抽看的一組中，`consumables.csv` 的那份沒有任何邊，關係都在 `remembrances.csv` 那份，多半是孤立的重複節點。Larval Tear 兩份的 `dlc` 標記不一致（1 與 0），使用者確認它是本篇（`dlc=0`），已在 `clean_raw.py` 把 `keyItems.csv` id=6 改為 0（見 `docs/note.md`）；已合併。詳見 `docs/graph-tools.md`
-10. **語料庫還沒去重**（同名 Item 合併的後續）：語料庫 `corpus.jsonl` 是每個 CSV 列一篇文件，這次合併只動了圖，向量索引裡同名的仍是兩篇（41 篇重複）。題庫的 `source` 沒有指到會被去掉的那一列，所以去重不影響 recall 的比對。要不要去重、被去掉的文件的欄位（例如 `consumables.csv` 那份的 `effect`）要不要併進保留的文件，待決定。向量索引本來就要重建，同時做最省事
+9. **同名 Item 節點（已全部合併）**（S4 挖出來的）：實際是 43 組、87 個節點（見上方「同名 Item 合併」）。使用者決定合併，已實作；原本先排除的 `Lord of Blood's Favor`（浸血前後）與 `Unalloyed Gold Needle`（斷掉 → 修復 → Millicent）經使用者確認是同一物品的不同狀態，也已合併，各狀態的取得方式留在 `merged_variants`。原本的重複主要在 `consumables.csv` 與 `remembrances.csv`（9 組）、`tools.csv` 之間。抽看的一組中，`consumables.csv` 的那份沒有任何邊，關係都在 `remembrances.csv` 那份，多半是孤立的重複節點。Larval Tear 兩份的 `dlc` 標記不一致（1 與 0），使用者確認它是本篇（`dlc=0`），已在 `clean_raw.py` 把 `keyItems.csv` id=6 改為 0（見 `docs/note.md`）；已合併。詳見 `docs/graph-tools.md`
+10. **語料庫還沒去重**（同名 Item 合併的後續）：語料庫 `corpus.jsonl` 是每個 CSV 列一篇文件，這次合併只動了圖，向量索引裡同名的仍是兩篇以上（共 44 篇重複）。題庫的 `source` 沒有指到會被去掉的那一列，所以去重不影響 recall 的比對。要不要去重、被去掉的文件的欄位（例如 `consumables.csv` 那份的 `effect`）要不要併進保留的文件，待決定。向量索引本來就要重建，同時做最省事
 11. **同一對節點之間有兩條同類型的邊**（S4 挖出來的）：例如 Malenia → Remembrance of the Rot Goddess 有兩條 `DROPS`，一條來自 bosses.csv 的掉落物字串、一條來自 remembrances.csv 的 `boss` 欄。`get_neighbors` 會把同一個鄰居列兩次。是否合併成一條（`sources` 記兩個來源，與 Boss↔地點的做法一致）待決定

@@ -238,15 +238,14 @@ def test_find_path_validation(t):
 
 # ---------------------------------------------------------------- 同名 Item 合併（build_graph.merge_duplicate_items）
 
-def test_no_duplicate_item_names_left_except_excluded(t):
-    """合併後，非 stub 的 Item 只剩兩組同名：不合併的 Lord of Blood's Favor（2 份）與 Unalloyed Gold Needle（3 份）。"""
+def test_no_duplicate_item_names_left(t):
+    """合併後，非 stub 的 Item 不再有同名（正規化後）的節點。"""
     from collections import defaultdict
     groups = defaultdict(list)
     for e in t.by_uid.values():
         if e["label"] == "Item" and not e["stub"]:
             groups[tools.norm(e["name"])].append(e["uid"])
-    assert {k: len(v) for k, v in groups.items() if len(v) > 1} == {
-        tools.norm("Lord of Blood's Favor"): 2, tools.norm("Unalloyed Gold Needle"): 3}
+    assert {k: v for k, v in groups.items() if len(v) > 1} == {}
 
 
 def test_merged_remembrance_has_both_halves(t):
@@ -279,9 +278,18 @@ def test_larval_tear_merged_and_conflicting_values_kept(t):
     assert "Item:keyItems:64" in m[0]["properties"]["merged_variants"]         # 兩份不同的欄位值（location 佔位文字）沒有丟掉
 
 
-def test_excluded_groups_stay_separate(t):
-    assert len(t.resolve("Lord of Blood's Favor", label="Item")) == 2
-    assert len(t.resolve("Unalloyed Gold Needle", label="Item")) == 3
+def test_item_states_merged_and_each_state_kept(t):
+    """同一個物品的不同狀態（使用者確認）：Lord of Blood's Favor 浸血前後、Unalloyed Gold Needle 斷掉 → 修復 → Millicent。
+    合併成一個節點，各狀態不同的 usage／location 留在 merged_variants，沒有丟。"""
+    lord = t.get_entity("Lord of Blood's Favor", label="Item")["matches"]
+    assert [m["uid"] for m in lord] == ["Item:keyItems:45"]
+    assert "Item:keyItems:46" in lord[0]["properties"]["merged_variants"]
+    assert "Fully reddened oath-cloth" in lord[0]["properties"]["merged_variants"]           # 浸血後的狀態
+    needle = t.get_entity("Unalloyed Gold Needle", label="Item")["matches"]
+    assert [m["uid"] for m in needle] == ["Item:keyItems:40"]
+    variants = needle[0]["properties"]["merged_variants"]
+    assert "Item:keyItems:41" in variants and "Item:keyItems:42" in variants
+    assert "Commander O" in variants and "Sage Gowry" in variants                       # 斷掉、修復兩個狀態的取得方式
 
 
 def test_merge_audit_file_lists_every_merged_node():
@@ -289,7 +297,7 @@ def test_merge_audit_file_lists_every_merged_node():
     log = ROOT / "data" / "processed" / "graph_item_merges.csv"
     assert log.exists()
     with log.open(encoding="utf-8", newline="") as f:
-        assert len(list(csv.DictReader(f))) == 41                     # 41 組各併掉 1 個
+        assert len(list(csv.DictReader(f))) == 44                     # 43 組、87 個節點：留 43 個，併掉 44 個
 
 
 # ---------------------------------------------------------------- filter_by_attribute
@@ -330,9 +338,9 @@ def test_filter_numeric_string_field(t):
 
 
 def test_filter_excludes_stubs_by_default(t):
-    """131 個 stub 不計入；同名 Item 合併（41 組各併掉 1 個）前是 834／965。"""
-    assert t.filter_by_attribute("Item", [])["total"] == 793
-    assert t.filter_by_attribute("Item", [], include_stubs=True)["total"] == 924
+    """131 個 stub 不計入；同名 Item 合併（43 組共併掉 44 個節點）前是 834／965。"""
+    assert t.filter_by_attribute("Item", [])["total"] == 790
+    assert t.filter_by_attribute("Item", [], include_stubs=True)["total"] == 921
 
 
 def test_filter_order_by_excludes_missing_values(t):

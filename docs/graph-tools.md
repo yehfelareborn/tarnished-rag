@@ -39,7 +39,7 @@ with GraphTools() as t:
 
 ## 設計決定
 
-- **重名**：同名 Item 合併之前，圖裡 111 個名字對到 226 個節點（例如 Boss 與 Creature 同名 16 組）。合併後 Item 的同名只剩兩組（不合併的那兩組），但 Boss 與 Creature、Boss 與 NPC 等跨類別的同名仍然存在，所以 `get_entity`／`get_neighbors` 不假設只有一個結果：回傳所有候選並附 `note`，可用 `label` 縮小或直接給 `uid`。
+- **重名**：同名 Item 合併之前，圖裡 111 個名字對到 226 個節點（例如 Boss 與 Creature 同名 16 組）。合併後 Item 不再有同名，但 Boss 與 Creature、Boss 與 NPC 等跨類別的同名仍然存在，所以 `get_entity`／`get_neighbors` 不假設只有一個結果：回傳所有候選並附 `note`，可用 `label` 縮小或直接給 `uid`。
 - **名稱解析順序**：uid → 精確 → 別名 → 去尾端括號 → 逗號前的簡稱（`Rykard` → `Rykard, Lord of Blasphemy`）→ 模糊比對（相似度 ≥ 0.9、數字一致）。指定 `label` 後某一層沒有結果就往下一層找。正規化與建圖用的 `norm()` 完全一致（測試有比對）。
 - **別名**：建圖時把別名表寫成目標節點的 `aliases` 屬性（`build_graph.attach_aliases`），工具只讀圖、不必 import 建圖腳本。例：問句的 `Rennala, Queen of the Full Moon` 精確對到 NPC、別名才對到 Boss `Rennala Carian Queen of the Full Moon`。`link_entities` 會把各層的候選合併，`resolve`（不帶 label）則是精確優先。
 - **`link_entities` 的限制**：名稱後面多一個 `s` 也算命中（所有格 `Volcano Manor's`、複數；因為正規化會把撇號去掉）；只做精確／別名／去括號／簡稱比對，不做模糊；名稱短於 `min_len` 的（例如 `Fia`）不會被掃描到，但直接呼叫 `get_entity("Fia")` 可以（走別名）。
@@ -50,7 +50,7 @@ with GraphTools() as t:
 
 ## 測試與題庫檢查
 
-**單元測試**（`python3 -m pytest tests/test_graph_tools.py -v`，58 個，Neo4j 連不上時整份 skip）：名稱正規化與建圖一致、名稱解析各層、實體連結（含所有格與別名）、四個工具的正常與錯誤輸入、來源屬性、截斷旗標、注入式欄位名、同名 Item 合併（合併後只剩排除的兩組同名、合併節點同時有兩邊的欄位與邊、正確拼法留在 `aliases`、衝突欄位值保留、稽核檔 41 列）。預期值取自題庫標準答案（q06、q09、q59–q64、q60、q72、q87）。已用一個真實 bug（所有格）驗證過測試抓得到問題：拿掉修正後 `test_link_entities_q09` 會失敗，其餘不受影響。
+**單元測試**（`python3 -m pytest tests/test_graph_tools.py -v`，58 個，Neo4j 連不上時整份 skip）：名稱正規化與建圖一致、名稱解析各層、實體連結（含所有格與別名）、四個工具的正常與錯誤輸入、來源屬性、截斷旗標、注入式欄位名、同名 Item 合併（合併後不再有同名、合併節點同時有兩邊的欄位與邊、正確拼法留在 `aliases`、衝突欄位值保留、物品各狀態的取得方式仍在 `merged_variants`、稽核檔 44 列）。預期值取自題庫標準答案（q06、q09、q59–q64、q60、q72、q87）。已用一個真實 bug（所有格）驗證過測試抓得到問題：拿掉修正後 `test_link_entities_q09` 會失敗，其餘不受影響。
 
 **題庫檢查**（`python3 eval/graph_tools_check.py`，結果存 `eval/results/graph_tools_check.json`）：題庫 relational 與 multi_hop 共 40 題，句型分成 6 個家族，每個家族對應一組**我事先定好的固定工具呼叫**（不經過 LLM）。把工具取回的實體名稱從標準答案文字裡扣掉（名稱先做和工具一致的正規化，並忽略尾端括號與 `Ash of War:` 這類前綴），扣完沒有剩下實體名稱才算 PASS。
 
@@ -69,7 +69,8 @@ with GraphTools() as t:
 ## 已知問題（從 S4 挖出來的 S3 資料問題，尚未處理）
 
 - **5 個紀念品節點的名稱黏字**：`Remembrance of theBlasphemous`／`theLichdragon`／`theNaturalborn`／`theStarscourge`／`theDragonlord`，來源檔 `remembrances.csv` 的名稱本來就少了空格。工具原樣回傳，LLM 引用時會出現黏字；題庫標準答案是正確拼法。**使用者決定不修**（2026-09-28），只記錄（見 `docs/note.md`「黏字」一節）。
-- **同名 Item 節點（已合併 41 組，2 組沒併）**：實際是 43 組、87 個節點。使用者決定合併，做法與結果見 `docs/graph-schema.md` 的「同名 Item 合併」。合併後 `get_neighbors`／`get_entity` 不再回兩個同名的紀念品。Larval Tear 兩份原本 `dlc` 標記不同（1 與 0），使用者確認是本篇，已修正為 0 並合併。**沒有合併**的兩組（`Lord of Blood's Favor`、`Unalloyed Gold Needle`）是同名但不同任務狀態的物品，`get_entity` 仍會回傳多個候選。合併節點上被覆蓋的欄位值存在 `merged_variants`（JSON 字串）。
+- **同名 Item 節點（已全部合併）**：實際是 43 組、87 個節點，合併後 44 個節點併入保留者，做法與結果見 `docs/graph-schema.md` 的「同名 Item 合併」。合併後 `get_neighbors`／`get_entity` 不再回兩個同名的物品。Larval Tear 兩份原本 `dlc` 標記不同（1 與 0），使用者確認是本篇，已修正為 0 並合併。`Lord of Blood's Favor`（浸血前後）與 `Unalloyed Gold Needle`（斷掉 → 修復 → Millicent）是同一物品的不同狀態，使用者確認後也合併了。
+- **合併節點的 `usage`／`location` 只反映一個狀態**：保留節點顯示的是保留者那一列的值，其他狀態的值存在 `merged_variants`（JSON 字串）。例如問 Unalloyed Gold Needle 在哪裡取得，`location` 只會看到 Millicent 那個，斷掉的針（Swamp of Aeonia，Commander O'Neil 掉落）與修復的針（Sage Gowry）要讀 `merged_variants`。LLM 需要知道有這個屬性；S5 的工具說明要提到。
 - **同一對節點之間可能有兩條同類型的邊**：例如 Malenia → Remembrance of the Rot Goddess 有兩條 `DROPS`（一條來自 `bosses.csv` 的掉落物字串、一條來自 `remembrances.csv` 的 `boss` 欄），Rykard、Lichdragon Fortissax 等也是。`get_neighbors` 會把同一個鄰居列兩次，邊上的 `source_file`、`note` 不同。這是建邊時各來源各自建一條造成的，不是節點重複；還沒處理。
 - **NPC／Boss 沒有 SAME_AS**：Ensha（q08）。
 - **NPC 邊的 `sources` 標得不完整**：見 `docs/graph-schema.md`。

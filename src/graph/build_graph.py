@@ -222,10 +222,11 @@ def pick(cands):
 
 
 # 同名 Item 合併（S4 查詢工具發現，使用者 2026-09-28 決定合併）。
-# 以 norm(name) 分組，同一組只留一個節點。不合併的組：同名但其實是不同任務狀態的物品，
-# 硬併會把不同物品變成一個（Lord of Blood's Favor 是白布與染紅的布；Unalloyed Gold Needle 有完整、斷掉、修復三種），
-# 留給使用者用遊戲知識決定。
-MERGE_EXCLUDE = {norm("Lord of Blood's Favor"), norm("Unalloyed Gold Needle")}
+# 以 norm(name) 分組，同一組只留一個節點。
+# 原本排除了 Lord of Blood's Favor（浸血前後）與 Unalloyed Gold Needle（斷掉 → 修復 → Millicent），因為它們的
+# usage／location 各不相同、我不確定是不是不同物品；使用者確認都是「同一個物品的不同狀態」，所以現在全部合併，
+# 各狀態的 usage／location 留在保留節點的 merged_variants。這個集合保留下來，之後若有真的不同的同名物品可以排除。
+MERGE_EXCLUDE = set()
 MERGED = {}                 # 被併掉的 uid -> 保留的 uid
 MERGE_LOG = []              # 稽核：每個被併掉的節點一列
 ITEM_MERGE_CSV = ROOT / "data" / "processed" / "graph_item_merges.csv"
