@@ -1,0 +1,51 @@
+{
+  "comparison": {
+    "n_questions": 10,
+    "n_judged": 10,
+    "answer_accuracy": 0.85,
+    "retrieval_recall_at_5": 0.95,
+    "unanswerable_refusal_rate": null
+  },
+  "false_premise": {
+    "n_questions": 6,
+    "n_judged": 6,
+    "answer_accuracy": 0.8333333333333334,
+    "retrieval_recall_at_5": 0.5833333333333334,
+    "unanswerable_refusal_rate": null
+  },
+  "multi_hop": {
+    "n_questions": 18,
+    "n_judged": 18,
+    "answer_accuracy": 0.8333333333333334,
+    "retrieval_recall_at_5": 0.8148148148148149,
+    "unanswerable_refusal_rate": null
+  },
+  "numeric": {
+    "n_questions": 22,
+    "n_judged": 22,
+    "answer_accuracy": 0.9545454545454546,
+    "retrieval_recall_at_5": 0.9545454545454546,
+    "unanswerable_refusal_rate": null
+  },
+  "relational": {
+    "n_questions": 22,
+    "n_judged": 22,
+    "answer_accuracy": 1.0,
+    "retrieval_recall_at_5": 1.0,
+    "unanswerable_refusal_rate": null
+  },
+  "single_fact": {
+    "n_questions": 22,
+    "n_judged": 22,
+    "answer_accuracy": 1.0,
+    "retrieval_recall_at_5": 1.0,
+    "unanswerable_refusal_rate": null
+  },
+  "unanswerable": {
+    "n_questions": 6,
+    "n_judged": 6,
+    "answer_accuracy": 1.0,
+    "retrieval_recall_at_5": null,
+    "unanswerable_refusal_rate": 1.0
+  }
+}

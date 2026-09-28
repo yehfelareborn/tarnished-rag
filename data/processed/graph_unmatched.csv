@@ -1,0 +1,39 @@
+kind,context,text,source_file
+boss_location,Stonedigger Troll,,data/processed/dlc_scrape/bosses.csv
+column_contaminated,Cathedral of Manus Metyr [creatures],Finger Mimic,data/processed/dlc_scrape/locations.csv
+column_contaminated,Church of the Crusade [creatures],Ash of War: Flame Skewer,data/processed/dlc_scrape/locations.csv
+column_contaminated,Murkwater Catacombs [npcs],Root Resin,data/processed/dlc_scrape/locations.csv
+column_contaminated,Stormfoot Catacombs [npcs],Root Resin,data/processed/dlc_scrape/locations.csv
+column_contaminated,Stormfoot Catacombs [npcs],Grave Violet,data/processed/dlc_scrape/locations.csv
+column_contaminated,Stormfoot Catacombs [npcs],Smoldering Butterfly,data/processed/dlc_scrape/locations.csv
+column_contaminated,Tombsward Catacombs [creatures],Grossmesser,data/processed/dlc_scrape/locations.csv
+column_contaminated,Seethewater Cave [npcs],Arteria Leaf,data/processed/dlc_scrape/locations.csv
+column_contaminated,Seethewater Cave [npcs],Crystal Cave Moss,data/processed/dlc_scrape/locations.csv
+column_contaminated,Seethewater Cave [npcs],Cave Moss,data/processed/dlc_scrape/locations.csv
+column_contaminated,Seethewater Cave [npcs],Dragonwound Grease,data/processed/dlc_scrape/locations.csv
+column_contaminated,Seethewater Cave [npcs],Immunizing Cured Meat,data/processed/dlc_scrape/locations.csv
+column_contaminated,Seethewater Cave [npcs],Lump of Flesh,data/processed/dlc_scrape/locations.csv
+column_contaminated,Seethewater Cave [npcs],Miranda Powder,data/processed/dlc_scrape/locations.csv
+column_contaminated,Seethewater Cave [npcs],Golden Rune (7),data/processed/dlc_scrape/locations.csv
+column_contaminated,Seethewater Cave [npcs],Golden Rune (6),data/processed/dlc_scrape/locations.csv
+column_contaminated,Seethewater Cave [npcs],Poisonbloom,data/processed/dlc_scrape/locations.csv
+column_contaminated,Seethewater Cave [npcs],Poison Grease,data/processed/dlc_scrape/locations.csv
+column_contaminated,Seethewater Cave [npcs],Poisonbone Dart,data/processed/dlc_scrape/locations.csv
+column_contaminated,Seethewater Cave [npcs],Preserving Boluses,data/processed/dlc_scrape/locations.csv
+column_contaminated,Sealed Tunnel [npcs],Golden Rune (5),data/processed/dlc_scrape/locations.csv
+column_contaminated,Sealed Tunnel [npcs],Golden Rune (9),data/processed/dlc_scrape/locations.csv
+column_contaminated,Sealed Tunnel [npcs],Cracked Crystal,data/processed/dlc_scrape/locations.csv
+column_contaminated,Sealed Tunnel [npcs],Poisoned Stone,data/processed/dlc_scrape/locations.csv
+column_contaminated,Sealed Tunnel [npcs],Gold-Pickled Fowl Foot,data/processed/dlc_scrape/locations.csv
+column_contaminated,Sealed Tunnel [npcs],Ruin Fragment,data/processed/dlc_scrape/locations.csv
+column_contaminated,Sealed Tunnel [npcs],Large Glintstone Scrap,data/processed/dlc_scrape/locations.csv
+column_contaminated,Bestial Sanctum [npcs],Clawmark Seal,data/processed/dlc_scrape/locations.csv
+column_contaminated,Bestial Sanctum [npcs],Bestial Sling,data/processed/dlc_scrape/locations.csv
+column_contaminated,Bestial Sanctum [npcs],Bestial Vitality,data/processed/dlc_scrape/locations.csv
+column_contaminated,Bestial Sanctum [npcs],Ash of War: Beast's Roar,data/processed/dlc_scrape/locations.csv
+column_contaminated,Bestial Sanctum [npcs],Beast Claw,data/processed/dlc_scrape/locations.csv
+column_contaminated,Bestial Sanctum [npcs],Stone of Gurranq,data/processed/dlc_scrape/locations.csv
+column_contaminated,Bestial Sanctum [npcs],Beastclaw Greathammer,data/processed/dlc_scrape/locations.csv
+column_contaminated,Bestial Sanctum [npcs],Gurranq's Beast Claw,data/processed/dlc_scrape/locations.csv
+column_contaminated,Bestial Sanctum [npcs],Ancient Dragon Smithing Stone,data/processed/dlc_scrape/locations.csv
+column_contaminated,Uhl Palace Ruins [npcs],Nomadic Warriors Cookbook [16],data/processed/dlc_scrape/locations.csv

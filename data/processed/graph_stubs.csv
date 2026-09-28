@@ -1,0 +1,229 @@
+label,name,source_file
+Location,Ancient Ruins of Rauh,data/processed/dlc_scrape/bosses.csv
+Location,Scadutree Base,data/processed/dlc_scrape/bosses.csv
+Location,Church of the Bud,data/processed/dlc_scrape/bosses.csv
+Location,Crumbling Farum Azula,data/processed/dlc_scrape/bosses.csv
+Location,Stone Platform,data/processed/dlc_scrape/bosses.csv
+Location,Recluses' River,data/processed/dlc_scrape/bosses.csv
+Location,Jagged Peak Foothills,data/processed/dlc_scrape/bosses.csv
+Location,Three Sisters,data/processed/dlc_scrape/bosses.csv
+Item,No drops,data/processed/dlc_scrape/bosses.csv
+Item,Solitude Set,data/processed/dlc_scrape/bosses.csv
+Item,Somberstone Miner's Bell Bearing (1),data/processed/dlc_scrape/bosses.csv
+Item,Rakshasa's Set,data/processed/dlc_scrape/bosses.csv
+Item,Hero's Rune [1],data/processed/dlc_scrape/bosses.csv
+Location,Hinterland,data/processed/dlc_scrape/bosses.csv
+Item,(NG),data/processed/dlc_scrape/bosses.csv
+Item,Lord's Rune,data/processed/dlc_scrape/bosses.csv
+Location,Ellac River,data/processed/dlc_scrape/bosses.csv
+Location,Church District,data/processed/dlc_scrape/bosses.csv
+Location,Scenic Isle,data/processed/dlc_scrape/bosses.csv
+Item,"? Runes (NG, Co-op Host)",data/processed/dlc_scrape/bosses.csv
+Item,Old Fang,data/processed/dlc_scrape/bosses.csv
+Item,Spared:,data/processed/dlc_scrape/bosses.csv
+Item,Grovel for Mercy,data/processed/dlc_scrape/bosses.csv
+Item,Slain:,data/processed/dlc_scrape/bosses.csv
+Item,Spear +7,data/processed/dlc_scrape/bosses.csv
+Item,"Nokron, Eternal City : 10.000 Runes",data/processed/dlc_scrape/bosses.csv
+Item,Silver Tear Mask Hidden Path to the Haligtree:,data/processed/dlc_scrape/bosses.csv
+Item,Broken Rune,data/processed/dlc_scrape/locations.csv
+Item,Incursion Painting,data/processed/dlc_scrape/locations.csv
+Item,Shadow Realm Rune [3],data/processed/dlc_scrape/locations.csv
+Item,Stimulating Boluse,data/processed/dlc_scrape/locations.csv
+Item,Shadow Realm Rune [1],data/processed/dlc_scrape/locations.csv
+Item,String,data/processed/dlc_scrape/locations.csv
+Item,Thin Beast Bones,data/processed/dlc_scrape/locations.csv
+Item,Tower of Shadow Message,data/processed/dlc_scrape/locations.csv
+Creature,Rotten Stray,data/processed/dlc_scrape/locations.csv
+Creature,Lesser Black Knight,data/processed/dlc_scrape/locations.csv
+Creature,"Moonrithyll, Carian Knight",data/processed/dlc_scrape/locations.csv
+Item,Shadow Realm Rune [2],data/processed/dlc_scrape/locations.csv
+Item,Shadow Realm Rune [4],data/processed/dlc_scrape/locations.csv
+Item,Glintstone Trio,data/processed/dlc_scrape/locations.csv
+Item,Glintslab Fly,data/processed/dlc_scrape/locations.csv
+Item,Message from Leda,data/processed/dlc_scrape/locations.csv
+Item,Monk's Missive,data/processed/dlc_scrape/locations.csv
+Item,May the Best Win,data/processed/dlc_scrape/locations.csv
+Creature,Lesser Magma Wyrm,data/processed/dlc_scrape/locations.csv
+Creature,Wolf,data/processed/dlc_scrape/locations.csv
+Item,Hefty Beast Bone,data/processed/dlc_scrape/locations.csv
+Creature,Greater Potentate,data/processed/dlc_scrape/locations.csv
+Item,O Mother Gesture,data/processed/dlc_scrape/locations.csv
+Boss,Swordhand of Night Anna,data/processed/dlc_scrape/locations.csv
+Boss,Swordhand of Night Jolan,data/processed/dlc_scrape/locations.csv
+Boss,Fire Knight Queelign,data/processed/dlc_scrape/locations.csv
+Creature,Fanged Imp,data/processed/dlc_scrape/locations.csv
+Item,Shadow Realm Rune (5),data/processed/dlc_scrape/locations.csv
+Item,Gold Horn Tender,data/processed/dlc_scrape/locations.csv
+Item,Frejya's Greatsword,data/processed/dlc_scrape/locations.csv
+Item,Horned Warrior Greatsword,data/processed/dlc_scrape/locations.csv
+Item,Let Us Go Together,data/processed/dlc_scrape/locations.csv
+Item,Common Soldier Armor Set,data/processed/dlc_scrape/locations.csv
+Item,Furcalling Finger Remedy,data/processed/dlc_scrape/locations.csv
+Boss,Furnace Golem,data/processed/dlc_scrape/locations.csv
+Creature,Shadow Militia,data/processed/dlc_scrape/locations.csv
+Creature,Fire Knight Captain Kood,data/processed/dlc_scrape/locations.csv
+Item,Shadow Realm Rune [6],data/processed/dlc_scrape/locations.csv
+Item,Rune of an Unsung Hero,data/processed/dlc_scrape/locations.csv
+Item,Leda's Rune,data/processed/dlc_scrape/locations.csv
+Item,Hornsent Set,data/processed/dlc_scrape/locations.csv
+Item,Stormhawk Feather,data/processed/dlc_scrape/locations.csv
+Item,Letter for Freyja,data/processed/dlc_scrape/locations.csv
+Item,Secret Rite Scroll,data/processed/dlc_scrape/locations.csv
+Item,Furnace Keeper's Note,data/processed/dlc_scrape/locations.csv
+Item,Storehouse Cross Message,data/processed/dlc_scrape/locations.csv
+Item,Domain of Dragons Painting,data/processed/dlc_scrape/locations.csv
+Item,Shadow Realm Rune (7),data/processed/dlc_scrape/locations.csv
+Item,Torn Diary Page,data/processed/dlc_scrape/locations.csv
+Creature,Albinauric Wolfback Archer,data/processed/dlc_scrape/locations.csv
+Boss,Mad Tongue Alberich,data/processed/dlc_scrape/locations.csv
+Boss,Ensha,data/processed/dlc_scrape/locations.csv
+Item,weapon,data/processed/dlc_scrape/locations.csv
+Item,Prayer Gesture,data/processed/dlc_scrape/locations.csv
+Item,What Do You Want? Gesture,data/processed/dlc_scrape/locations.csv
+Item,Curtsy Gesture,data/processed/dlc_scrape/locations.csv
+Item,Reverential Bow Gesture,data/processed/dlc_scrape/locations.csv
+Item,Homing Instinct Painting,data/processed/dlc_scrape/locations.csv
+Creature,Soldier,data/processed/dlc_scrape/locations.csv
+Item,Smoldering Butterfly,data/processed/dlc_scrape/locations.csv
+Item,Gesture,data/processed/dlc_scrape/locations.csv
+Item,Merchant Kale,data/processed/dlc_scrape/locations.csv
+NPC,Nomadic Merchant West Limgrave,data/processed/dlc_scrape/locations.csv
+Creature,Skeleton,data/processed/dlc_scrape/locations.csv
+Creature,Eagles,data/processed/dlc_scrape/locations.csv
+Creature,Rat,data/processed/dlc_scrape/locations.csv
+Creature,Abnormal Stone Cluster,data/processed/dlc_scrape/locations.csv
+NPC,Nomadic Merchant,data/processed/dlc_scrape/locations.csv
+Creature,Cat Imp,data/processed/dlc_scrape/locations.csv
+Item,Aspect of the Crucible: Horns,data/processed/dlc_scrape/locations.csv
+Item,Runes,data/processed/dlc_scrape/locations.csv
+Item,Dozing Cross-Legged,data/processed/dlc_scrape/locations.csv
+Item,Prophecy Painting,data/processed/dlc_scrape/locations.csv
+Boss,Soldier of Godrick,data/processed/dlc_scrape/locations.csv
+NPC,Isolated Merchant,data/processed/dlc_scrape/locations.csv
+Item,Info: Walking Mausoleum,data/processed/dlc_scrape/locations.csv
+Creature,Crimson Teardrop Scarab,data/processed/dlc_scrape/locations.csv
+Item,Ghost Gloveworth [1],data/processed/dlc_scrape/locations.csv
+NPC,Finger Reader Crone,data/processed/dlc_scrape/locations.csv
+Item,Resurrection Painting,data/processed/dlc_scrape/locations.csv
+NPC,Nomadic Merchant North Liurnia of the Lakes,data/processed/dlc_scrape/locations.csv
+Creature,Necromancer,data/processed/dlc_scrape/locations.csv
+Boss,Preceptor Miriam,data/processed/dlc_scrape/locations.csv
+Creature,Raya Lucaria Knight,data/processed/dlc_scrape/locations.csv
+Creature,Rats,data/processed/dlc_scrape/locations.csv
+Item,Numen's Rune,data/processed/dlc_scrape/locations.csv
+Creature,Crystalians,data/processed/dlc_scrape/locations.csv
+Creature,Alabaster Lord,data/processed/dlc_scrape/locations.csv
+Item,Meteor Bolts,data/processed/dlc_scrape/locations.csv
+Creature,Lesser Sanguine Noble,data/processed/dlc_scrape/locations.csv
+Creature,Troll Spirit Knight,data/processed/dlc_scrape/locations.csv
+Creature,First-Generation Albinauric,data/processed/dlc_scrape/locations.csv
+Item,Incantations,data/processed/dlc_scrape/locations.csv
+Item,Golden Rune (12),data/processed/dlc_scrape/locations.csv
+Creature,Giant Crow,data/processed/dlc_scrape/locations.csv
+Item,Sellia's Secret,data/processed/dlc_scrape/locations.csv
+Boss,Lion Misbegotten Warrior,data/processed/dlc_scrape/locations.csv
+Item,Polite Bow Gesture,data/processed/dlc_scrape/locations.csv
+Creature,Giant Dog,data/processed/dlc_scrape/locations.csv
+Boss,Nox Swordstress & Nox Priest,data/processed/dlc_scrape/locations.csv
+Item,Redmane Painting,data/processed/dlc_scrape/locations.csv
+Item,Perfumer Traveler's Set,data/processed/dlc_scrape/locations.csv
+Item,Gold firefly,data/processed/dlc_scrape/locations.csv
+Item,Mirage Riddle,data/processed/dlc_scrape/locations.csv
+Creature,Giant Poison Flower,data/processed/dlc_scrape/locations.csv
+Creature,Poison Flowers,data/processed/dlc_scrape/locations.csv
+Item,Rejuvinating Boluses,data/processed/dlc_scrape/locations.csv
+Creature,"Eleonora, Violet Bloody Finger",data/processed/dlc_scrape/locations.csv
+Creature,Slug,data/processed/dlc_scrape/locations.csv
+Item,"""Champion's Song"" Painting",data/processed/dlc_scrape/locations.csv
+Boss,Perfumer Tricia,data/processed/dlc_scrape/locations.csv
+Creature,Mage-Serpent,data/processed/dlc_scrape/locations.csv
+Item,Hoslow's Vow Gesture,data/processed/dlc_scrape/locations.csv
+Item,Letter from Volcano Manor,data/processed/dlc_scrape/locations.csv
+Item,Red Letter,data/processed/dlc_scrape/locations.csv
+NPC,Hermit Merchant,data/processed/dlc_scrape/locations.csv
+Item,Note: Below the Capital,data/processed/dlc_scrape/locations.csv
+Creature,Vulgar Militia,data/processed/dlc_scrape/locations.csv
+Item,Golden Rune (11),data/processed/dlc_scrape/locations.csv
+Boss,Elden Beast,data/processed/dlc_scrape/locations.csv
+Item,Hero's Rune (5),data/processed/dlc_scrape/locations.csv
+Item,Flightless Bird Painting,data/processed/dlc_scrape/locations.csv
+Item,By My Sword,data/processed/dlc_scrape/locations.csv
+Item,Golden Scarab,data/processed/dlc_scrape/locations.csv
+Boss,Gurranq,data/processed/dlc_scrape/locations.csv
+Boss,Elder Dragon Greyoll,data/processed/dlc_scrape/locations.csv
+NPC,Isolated Merchant Dragonbarrow,data/processed/dlc_scrape/locations.csv
+Item,Note: Gateway,data/processed/dlc_scrape/locations.csv
+Item,Note: Hidden Cave,data/processed/dlc_scrape/locations.csv
+Boss,Putrid Crystalians,data/processed/dlc_scrape/locations.csv
+NPC,Sellen,data/processed/dlc_scrape/locations.csv
+Item,Freezing Grease,data/processed/dlc_scrape/locations.csv
+Item,Sorcerer Painting,data/processed/dlc_scrape/locations.csv
+Creature,Bloody Finger Okina,data/processed/dlc_scrape/locations.csv
+Boss,Stray Mimic Tear,data/processed/dlc_scrape/locations.csv
+Creature,Crimson Scarabs,data/processed/dlc_scrape/locations.csv
+Creature,Cerulean Scarabs,data/processed/dlc_scrape/locations.csv
+Boss,Chief Guardian Arghanthy,data/processed/dlc_scrape/locations.csv
+Creature,"Inaba, Disciple of Okina",data/processed/dlc_scrape/locations.csv
+Creature,Wandering Mausoleum,data/processed/dlc_scrape/locations.csv
+Item,Hero's Rune (2),data/processed/dlc_scrape/locations.csv
+Creature,Lesser Kindred of Rot,data/processed/dlc_scrape/locations.csv
+Item,Golden Rune (13),data/processed/dlc_scrape/locations.csv
+Item,Ghost-Glovewort Picker's Bell Bearing (3),data/processed/dlc_scrape/locations.csv
+Creature,Giant Oracle Envoy,data/processed/dlc_scrape/locations.csv
+Item,Hero's Rune (4),data/processed/dlc_scrape/locations.csv
+Item,Warming Stones,data/processed/dlc_scrape/locations.csv
+NPC,Hermit Merchant Ainsel River,data/processed/dlc_scrape/locations.csv
+Item,Silver Tear Husk,data/processed/dlc_scrape/locations.csv
+Boss,Walking Mausoleum,data/processed/dlc_scrape/locations.csv
+NPC,D's Twin Brother,data/processed/dlc_scrape/locations.csv
+Creature,Elden Ring Map here,data/processed/dlc_scrape/locations.csv
+Item,Silurias's Tree,data/processed/dlc_scrape/locations.csv
+Creature,Blistered Stray,data/processed/dlc_scrape/locations.csv
+Item,Blood-Tainted Excrement,data/processed/dlc_scrape/locations.csv
+Creature,Silver Sphere,data/processed/dlc_scrape/locations.csv
+Creature,Lesser Crucible Knight,data/processed/dlc_scrape/locations.csv
+NPC,Nomadic Merchant Siofra River,data/processed/dlc_scrape/locations.csv
+Item,Oracular Bubbles,data/processed/dlc_scrape/locations.csv
+NPC,Lesser Fingercreepers,data/processed/dlc_scrape/locations.csv
+Item,Crystal Tears and Furnace Visage,data/processed/dlc_scrape/creatures.csv
+Item,Common Solider Greaves,data/processed/dlc_scrape/creatures.csv
+Item,Golden Runes,data/processed/dlc_scrape/creatures.csv
+Item,Thin Animal Bones,data/processed/dlc_scrape/creatures.csv
+Item,Varied drops,data/processed/dlc_scrape/creatures.csv
+Item,Crescent Moon Axe Soldier's Crossbow Smithing Stones Stormhawk Feather Smoldering Butterfly Mushroom,data/processed/dlc_scrape/creatures.csv
+Item,Smithing Stones,data/processed/dlc_scrape/creatures.csv
+Item,Explosive Stone,data/processed/dlc_scrape/creatures.csv
+Item,Rowa Raisin Sweet Raisin Frozen Raisin,data/processed/dlc_scrape/creatures.csv
+Item,Godrick Foot Soldier Set,data/processed/dlc_scrape/creatures.csv
+Item,Bandit's Curved Sword Human Bone Shard,data/processed/dlc_scrape/creatures.csv
+Item,Raya Lucarian Sorcerer Set,data/processed/dlc_scrape/creatures.csv
+Item,Lazuli Sorcerer Set,data/processed/dlc_scrape/creatures.csv
+Item,Mausoleum Soldier Set,data/processed/dlc_scrape/creatures.csv
+Item,Somber Smithing Stones,data/processed/dlc_scrape/creatures.csv
+Item,Ghost Gloveworts,data/processed/dlc_scrape/creatures.csv
+Item,1831,data/processed/dlc_scrape/creatures.csv
+Item,Raya Lucaria Foot Soldier Set,data/processed/dlc_scrape/creatures.csv
+Item,Leyndell Foot Soldier Set,data/processed/dlc_scrape/creatures.csv
+Item,Radahn Foot Soldier Set,data/processed/dlc_scrape/creatures.csv
+Item,Haligtree Foot Soldier Set,data/processed/dlc_scrape/creatures.csv
+Item,Haligtree Soldier Set,data/processed/dlc_scrape/creatures.csv
+Item,Rotten Duelist Armor Set,data/processed/dlc_scrape/creatures.csv
+Item,Nothing,data/processed/dlc_scrape/creatures.csv
+Item,Grave Gloveworts,data/processed/dlc_scrape/creatures.csv
+Item,Carian Study Hall:,data/processed/dlc_scrape/creatures.csv
+Item,Magic Downpour Carian Study Hall (Inverted):,data/processed/dlc_scrape/creatures.csv
+Item,Raya Lucarian Soldier Set,data/processed/dlc_scrape/creatures.csv
+Item,"4,736 ~ 26,460 Runes",data/processed/dlc_scrape/creatures.csv
+Item,Furlcalling Finger Remedy Rune Arc Great Stars Somber Smithing Stone (6),data/processed/dlc_scrape/creatures.csv
+Spell,Land of Shadow,data/raw/dlc_scrape/items/remembrances.csv
+Weapon,Rellana's Twinblade,data/raw/dlc_scrape/items/remembrances.csv
+Boss,"Hoarah Loux, Warrior",data/raw/dlc_scrape/items/remembrances.csv
+Skill,Parry,data/raw/dlc_scrape/weapons.csv
+Skill,Wild Strike,data/raw/dlc_scrape/weapons.csv
+Skill,Great Oracular Bubble,data/raw/dlc_scrape/weapons.csv
+Skill,Glintstone Pebble Skill,data/raw/dlc_scrape/ashesOfWar.csv
+Boss,Beast Clergyman,data/raw/boss_stats/elden_ring_boss_stats_clean.csv
+Boss,Ghostflame Dragon,data/raw/boss_stats/elden_ring_boss_stats_clean.csv
+Boss,Leda and Allies Boss,data/raw/boss_stats/elden_ring_boss_stats_clean.csv
+Boss,Elder Lion,data/raw/boss_stats/elden_ring_boss_stats_clean.csv
