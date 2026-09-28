@@ -221,6 +221,25 @@ SPLIT_MULTI_ENCOUNTER_IDS = {
     "0",   # Divine Beast Dancing Lion: Belurat, Tower Settlement（初戰）/ Ancient Ruins of Rauh（強化重戰）
 }
 
+# 使用者確認（2026-09-29，S4 查 Perfumer Tricia 時發現）：id=137 Misbegotten Warrior 一列的掉落物欄
+# 把兩場不同的戰鬥接在一起了——原始字串是
+#   {'Unsightly Catacombs': ['Unsightly Catacombs :', '9400 Runes', 'Perfumer Tricia Ashes Redmane Castle :', '16000 Runes', 'Ruins Greatsword']}
+# 只有一個地點 key，第二個地點 `Redmane Castle :` 的標題被黏在上一個掉落物後面（建圖時會被當表格雜訊丟掉，
+# 連 Perfumer Tricia Ashes 一起消失）。實際是：
+#   - Unsightly Catacombs：Misbegotten Warrior 與 Perfumer Tricia 同時出現的一場戰鬥（各有血條）。
+#     這場戰鬥在 bosses.csv 是 id=97 `Perfumer Tricia and Misbegotten Warrior`，但那一列整列是空的。
+#     掉 9400 Runes、Perfumer Tricia Ashes。
+#   - Redmane Castle：另一隻 Misbegotten Warrior（boss），掉 16000 Runes、Ruins Greatsword；HP ≈ 3560 屬於這一隻。
+# 使用者確認以上都對；`Lion Misbegotten Warrior`（locations.csv 的 Redmane Castle 也列了）是另一隻 boss，不是這一隻。
+# 做法：不改名稱與 HP，只把兩場戰鬥的地點與掉落物各放回自己那一列。
+# id -> (預期的名稱, 原始 Locations & Drops 必須包含的字串（None 表示必須是空的）, 新的 Locations & Drops)
+BOSS_LOCATION_FIXES = {
+    "97": ("Perfumer Tricia and Misbegotten Warrior", None,
+           {"Unsightly Catacombs": ["9400 Runes", "Perfumer Tricia Ashes"]}),
+    "137": ("Misbegotten Warrior", "Redmane Castle :",
+            {"Redmane Castle": ["16000 Runes", "Ruins Greatsword"]}),
+}
+
 
 def fix_locations() -> None:
     """locations.csv 的 bosses/npcs 欄位污染，S1 出題時抽樣才發現：
@@ -312,6 +331,7 @@ def fix_bosses() -> None:
     3. 同一 boss、多個獨立戰鬥地點的拆分成多個節點（見 SPLIT_MULTI_ENCOUNTER_IDS）。
        拆分後每筆沒有各自的 HP 數據，先沿用同一個原始 HP 值。
        （Morgott, the Omen King 在原始資料裡本來就是獨立一列 id=16，不受影響。）
+    4. 地點與掉落物欄位的修正（見 BOSS_LOCATION_FIXES）：兩場戰鬥被接在同一列，或該列是空的。
     """
     src = RAW / "bosses.csv"
     dst = OUT / "bosses.csv"
@@ -324,7 +344,17 @@ def fix_bosses() -> None:
 
     hp_fixed = 0
     dlc_fixed = 0
+    loc_fixed = 0
     for row in rows:
+        if row["id"] in BOSS_LOCATION_FIXES:
+            expect_name, expect_marker, new_locs = BOSS_LOCATION_FIXES[row["id"]]
+            raw_locs = row["Locations & Drops"].strip()
+            if row["name"].strip() != expect_name:
+                raise ValueError(f"bosses.csv id={row['id']} 應該是 {expect_name!r}，實際是 {row['name']!r}")
+            if (expect_marker is None and raw_locs) or (expect_marker is not None and expect_marker not in raw_locs):
+                raise ValueError(f"bosses.csv id={row['id']} 的 Locations & Drops 與預期不同：{raw_locs[:120]!r}")
+            row["Locations & Drops"] = repr(new_locs)
+            loc_fixed += 1
         if row["id"] in HP_FIXES:
             row["HP"] = HP_FIXES[row["id"]]
             hp_fixed += 1
@@ -364,7 +394,7 @@ def fix_bosses() -> None:
         writer.writeheader()
         writer.writerows(out_rows)
 
-    print(f"bosses.csv: fixed HP on {hp_fixed} rows, dlc on {dlc_fixed} rows, "
+    print(f"bosses.csv: fixed HP on {hp_fixed} rows, dlc on {dlc_fixed} rows, locations on {loc_fixed} rows, "
           f"split {len(SPLIT_MULTI_ENCOUNTER_IDS)} boss(es) into {split_count} rows")
 
 
@@ -454,6 +484,8 @@ def align_boss_locations() -> None:
                 continue
             lst = _plist(L["bosses"])
             if any(_same(br["name"], x) for x in lst):
+                continue
+            if any(_component_of(x, [br["name"]]) for x in lst):        # 清單裡已經有合併列名稱的其中一員（'Perfumer Tricia'）
                 continue
             if any(_same(br["name"], x) for x in _plist(L["creatures"])) or any(_same(br["name"], x) for x in _plist(L["npcs"])):
                 continue

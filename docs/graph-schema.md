@@ -36,18 +36,18 @@
   - **已查**：題庫的 `source` 沒有指到被併掉的那一列；合併後 Rot Goddess 是單一節點，同時有 `DROPS` 與 `EXCHANGES_FOR`。
   - **一開始的數字要更正**：最早用小寫名稱比對只找到 36 組、73 個節點，漏掉名稱只差空格或引號的 2 組，以及 5 個黏字紀念品（`theBlasphemous` 與 `the Blasphemous` 不同）。用建圖的正規化名稱比才是 43 組、87 個節點。
 
-## 邊（共 6598 條）
+## 邊（共 6599 條）
 
 | 關係 | 條數 | 方向 | 來源欄位 | 邊上的屬性 |
 |---|---|---|---|---|
-| `LOCATED_AT` | 4334 | Boss／NPC／Creature／物品類 → Location（或 Region）| bosses.csv `Locations & Drops` 的 key；locations.csv 的 `bosses`／`npcs`／`creatures`／`items` 清單 | `source_file`、`runes`（來自 bosses.csv 的邊，共 219 條有值）、`match`（exact／alias／substring／region／stub／from_location_list）、`note`、`sources`（見下）|
-| `DROPS` | 1309 | Boss／Creature → 物品類 | bosses.csv 每個地點 key 底下的 list；creatures.csv `drops`；remembrances.csv 的 `boss` | `at_location`（443 條有值）、`note`（例如 `via set: X Set`、`stub`）|
+| `LOCATED_AT` | 4334 | Boss／NPC／Creature／物品類 → Location（或 Region）| bosses.csv `Locations & Drops` 的 key；locations.csv 的 `bosses`／`npcs`／`creatures`／`items` 清單 | `source_file`、`runes`（來自 bosses.csv 的邊，共 220 條有值）、`match`（exact／alias／substring／region／stub／from_location_list）、`note`、`sources`（見下）|
+| `DROPS` | 1310 | Boss／Creature → 物品類 | bosses.csv 每個地點 key 底下的 list；creatures.csv `drops`；remembrances.csv 的 `boss` | `at_location`（444 條有值）、`note`（例如 `via set: X Set`、`stub`）|
 | `HAS_SKILL` | 500 | Weapon／Shield → Skill | weapons.csv／shields.csv `skill` | |
 | `LOCATED_IN` | 286 | Location → Region | locations.csv `region` | |
 | `GRANTS` | 116 | AshOfWar → Skill | ashesOfWar.csv `skill` | |
 | `EXCHANGES_FOR` | 53 | 紀念品（Item）→ Weapon／Spell／Talisman／AshOfWar／Item | remembrances.csv `option 1`／`option 2`（用型別前綴決定目標標籤）| `option`（1／2）|
 
-**`sources` 屬性**：`LOCATED_AT` 邊上的字串陣列，記錄「這條 Boss↔地點關係是哪個檔案說的」——`['bosses.csv','locations.csv']` 表示兩邊都有寫，只有一個檔名表示只有那一邊有寫。只設在 Boss 的邊（以及依 `BOSS_ONLY_AT` 拆出的 NPC 身分的邊）上，其餘 4015 條邊沒有這個屬性。目前 Boss 邊分布：兩邊都有 183、只有 bosses.csv 67、只有 locations.csv 62（共 312）；另有 7 條掛在 NPC 節點上（Patches 的 NPC 身分）。這 7 條的 `sources` 都是 `['bosses.csv']`，其中 The Shaded Castle 與 Volcano Manor 各有兩條邊，一條來自 bosses.csv、一條來自 locations.csv 的 `npcs` 清單，後一條的 `sources` 標得不完整（只寫 bosses.csv）。這是既有的小瑕疵，NPC 邊不在 Boss↔地點稽核範圍，尚未修。用途是讓稽核與（日後 S4 的）查詢工具能依來源篩選或加權，見下方「兩個來源對 Boss↔地點的說法不一致」。
+**`sources` 屬性**：`LOCATED_AT` 邊上的字串陣列，記錄「這條 Boss↔地點關係是哪個檔案說的」——`['bosses.csv','locations.csv']` 表示兩邊都有寫，只有一個檔名表示只有那一邊有寫。只設在 Boss 的邊（以及依 `BOSS_ONLY_AT` 拆出的 NPC 身分的邊）上，其餘 4015 條邊沒有這個屬性。目前 Boss 邊分布：兩邊都有 184、只有 bosses.csv 67、只有 locations.csv 61（共 312）；另有 7 條掛在 NPC 節點上（Patches 的 NPC 身分）。這 7 條的 `sources` 都是 `['bosses.csv']`，其中 The Shaded Castle 與 Volcano Manor 各有兩條邊，一條來自 bosses.csv、一條來自 locations.csv 的 `npcs` 清單，後一條的 `sources` 標得不完整（只寫 bosses.csv）。這是既有的小瑕疵，NPC 邊不在 Boss↔地點稽核範圍，尚未修。用途是讓稽核與（日後 S4 的）查詢工具能依來源篩選或加權，見下方「兩個來源對 Boss↔地點的說法不一致」。
 
 **限制**：資料層對齊（A1、B4、使用者確認清單）補出來的關係，`sources` 標的「兩邊都有」是對齊的結果——被補的那一邊是我寫進去的，**不代表兩個來源各自獨立確認**。這類關係共 37 條（B4 20 條、A1 10 條、使用者確認清單 7 條），獨立證據只有原本就有寫的那一邊，可從 `data/processed/alignment_changes.csv` 查出是哪些。要看「真正獨立兩邊都有」的關係，需要排除這 37 條，或對照 `data/raw/`。
 
@@ -59,7 +59,7 @@
 
 1. **精確**：正規化後相等（小寫、去標點與撇號、去重音、修 `theBlasphemous` 這類黏字）
 2. **清理後精確**：對候選字串做明確的清理再精確比對——去 HTML 實體、去頭尾數量（`12x X`、`X x5`、`x1 X`）、去尾端括號註解（`(NG Only)`、`(6)`、`(+8)`、任意長度括號）、去 `Gateway:` 這類短前綴、去 `Ashes` 後綴（召喚靈）、`+N` 補成 `+N Variant`（護符）
-3. **別名表**（後備，精確比對優先）：共 19 組。前 7 組依遊戲知識判斷為同一實體，**已由使用者確認正確**（Morgott、Rennala 的 boss 全名、`Nepheli Loux`、`Count Ymir`、`War Counselor Iji`、`Shaded Castle Spirit`、`Soldier of Godrick`→`Godrick Soldier`）；其餘為 NPC 簡稱，逐一對照過 npcs.csv 的實際名稱（`Fia`、`Blaidd`、`Diallos`、`Corhyn`、`Ansbach`、`Boc`、`Alexander`、`Yura`、`Rennala`、`Ranni the Witch`、`Ensha`）。最後一組 `Perfumer Tricia`→`Perfumer Tricia and Misbegotten Warrior`（`locations.csv` 用單人名字，`bosses.csv` 是合併列）是 A1 對齊時我加的，**尚未經使用者確認**
+3. **別名表**（後備，精確比對優先）：共 19 組。前 7 組依遊戲知識判斷為同一實體，**已由使用者確認正確**（Morgott、Rennala 的 boss 全名、`Nepheli Loux`、`Count Ymir`、`War Counselor Iji`、`Shaded Castle Spirit`、`Soldier of Godrick`→`Godrick Soldier`）；其餘為 NPC 簡稱，逐一對照過 npcs.csv 的實際名稱（`Fia`、`Blaidd`、`Diallos`、`Corhyn`、`Ansbach`、`Boc`、`Alexander`、`Yura`、`Rennala`、`Ranni the Witch`、`Ensha`）。最後一組 `Perfumer Tricia`→`Perfumer Tricia and Misbegotten Warrior`（`locations.csv` 用單人名字，`bosses.csv` 是合併列）是 A1 對齊時我加的，**已由使用者確認正確**（2026-09-29：Unsightly Catacombs 是 Misbegotten Warrior 與 Perfumer Tricia 同一場戰鬥，各有血條）
 4. **去空白**：補空白或撇號黏合的差異（`Wolf s Assault` → `Wolf's Assault`）
 5. **錯字容忍**（僅在建 stub 之前，僅限 Boss／NPC／Creature／Location）：相似度 ≥ 0.93、數字完全相同、且只有一個候選。實際合併 27 次，多為單複數（`Teardrop Scarab`／`Scarabs`），加上 `Black Knight Edreed`／`Edredd`
 6. **建 stub**：以上都對不上，但資料裡確實有明確提到，就建只有名稱與來源、標記 `stub=true` 的節點，全部列在 `data/processed/graph_stubs.csv`
@@ -96,12 +96,12 @@
   - 調查只涵蓋 `bosses.csv` 的地點欄，因為在我讀過的 `build_graph.py` 裡只有這一處呼叫 `resolve_location`；`locations.csv` 各清單走的是 `resolve()`，對不上會建 stub，不受這個問題影響
 - **兩個來源對 Boss↔地點的說法不一致**：`locations.csv` 每個地點有一欄 `bosses`，`bosses.csv` 每隻 boss 有一段地點文字，理論上是同一份關係的兩個方向，實際上並不一致。圖取聯集，並在 Boss 的 `LOCATED_AT` 邊上用 `sources` 標出哪個檔案有寫。唯讀稽核腳本 `src/graph/audit_boss_locations.py` 依 `sources` 分類（需先建圖）。
 
-  **現況**：Boss 的 `LOCATED_AT` 共 312 條，其中 47 條指向 Region（312 − 265；只有 `bosses.csv` 會寫到區域層級，`locations.csv` 的 boss 清單沒有，所以不在比對範圍），其餘 **265 條**指向 Location。265 條的分類（有不一致的地點共 53 個）：
+  **現況**：Boss 的 `LOCATED_AT` 共 312 條，其中 47 條指向 Region（312 − 265；只有 `bosses.csv` 會寫到區域層級，`locations.csv` 的 boss 清單沒有，所以不在比對範圍），其餘 **265 條**指向 Location。265 條的分類（有不一致的地點共 52 個）：
 
   | 類型 | 條數 | 意思 | 處理 | 例子 |
   |---|---|---|---|---|
-  | 兩邊都有 | 183 | | | 對齊前是 143；現在 183 條中有 37 條是對齊補出來的（見上方 `sources` 的限制）。143 + 37 = 180，差 3 條：其中 1 條是 Jagged Peak Drake（`Foothills` 別名後兩邊都有），另外 2 條我沒有逐條追查 |
-  | A2 | 54 | 只在 locations 清單；`bosses.csv` 有這隻 boss，但它的地點文字沒寫這個地點 | **未動**，待使用者檢視 | Gatefront Ruins ← Tree Sentinel |
+  | 兩邊都有 | 184 | | | 對齊前是 143；現在 184 條中有 37 條是對齊補出來的（見上方 `sources` 的限制）。143 + 37 = 180，差 4 條：其中 2 條可解釋（Jagged Peak Drake：`Foothills` 別名後兩邊都有；Perfumer Tricia：補上 id=97 的地點後兩邊都有），另外 2 條我沒有逐條追查 |
+  | A2 | 53 | 只在 locations 清單；`bosses.csv` 有這隻 boss，但它的地點文字沒寫這個地點 | **未動**，待使用者檢視 | Gatefront Ruins ← Tree Sentinel |
   | 地點是 stub | 19 | 只在 bosses.csv；那個地點在 locations.csv 根本不存在（見下方 Location stub），所以必然單邊 | 不算真的不一致 | Ancient Ruins of Rauh ← Divine Beast Dancing Lion |
   | A1 剩餘 | 8 | 只在 locations 清單；`bosses.csv` 沒有這隻 boss 的列（建了 Boss stub）| 見下，**故意不補列** | Church of the Crusade ← Fire Knight Queelign |
   | B3 | 0 | 原本 5 條：只在 bosses.csv，地點是從黏在一起的多地點字串（或錯字容忍）推得 | 使用者逐條確認正確，已對齊（見下）| |
@@ -110,11 +110,12 @@
   **已套用的決定**（A1、B4、B3、B1、B2 是使用者的裁決；A1 的兩條例外規則是我延伸的，見下，使用者尚未逐一確認）：
   - **A1、B4：讓兩邊對齊**（資料層，`clean_raw.py`，`data/raw` 不動）。B4：`bosses.csv` 的地點 key 精確對上某個地點、但該地點的 `bosses` 清單沒列這隻 → 補進清單，共 **20 條**（例如 Magma Wyrm → Dragon's Pit、Ulcerated Tree Spirit → Belurat Tower Settlement／Leyndell 兩處）。A1：`locations.csv` 的 `bosses` 清單列了、但 `bosses.csv` 沒這隻 → 在 `bosses.csv` 補一列（`bosses.csv` 裡這一列只有名稱與地點；dlc 沿用地點的 dlc），共補 **9 列、10 條地點關係**（Swordhand of Night Anna／Jolan、Elden Beast、Elder Dragon Greyoll、Walking Mausoleum、Putrid Crystalians、Stray Mimic Tear、Lion Misbegotten Warrior、Nox Swordstress & Nox Priest）。A1 對齊後 A1 由 19 條降為 8 條
   - **B3：使用者逐條確認後，補進地點的 boss 清單**（`clean_raw.py` 的 `CONFIRMED_BOSS_LOCATIONS`，共 7 筆）。原 B3 的 5 條經使用者（玩過遊戲）確認都正確：Spiritcaller Snail @ Spiritcaller Cave（`bosses.csv` 拼成 `Spiritcaller's Cave`）、Mimic Tear @ Hidden Path to the Haligtree（我原本懷疑可能是把兩隻混在一起，使用者確認是對的）、Messmer the Impaler 與 Base Serpent Messmer（兩個階段）@ Shadow Keep。另外使用者確認 Golem 那串（`Stormhill Castle Morne Ainsel River Well Leyndell, Royal Capital Mountaintops of the Giants`）的**每個地點都有 Golem**，所以補進 Stormhill、Castle Morne、Ainsel River Well 三處的 boss 清單（Leyndell, Royal Capital 原本就有；Mountaintops of the Giants 在 locations.csv 只是區域、沒有地點列，邊本來就在）。這與 A1、B4 的補法相同；三者合計 37 條關係是對齊補出來的（「兩邊都有」由 143 變成 183，數字對不上的部分見上方現況表）
-  - **A1 有 9 個名稱刻意跳過**（記在 `alignment_changes.csv`，kind 為 `A1_skipped_*`）：其中 8 個在 `npcs.csv` 或 `creatures.csv` 已有同名（或別名、或逗號前的名字）的實體——Furnace Golem、Mad Tongue Alberich、Preceptor Miriam、Chief Guardian Arghanthy、`Soldier of Godrick`（別名 Godrick Soldier）是 creature，Fire Knight Queelign、`Ensha`（別名 Ensha of the Royal Remains）、Gurranq（`Gurranq, Beast Clergyman`）是 NPC。這是我把使用者對 B1、B2 的裁決（creature 分類是對的；同時是 NPC 又是 boss 屬特例）延伸過來的判斷：不替它們新增 Boss 列，所以圖裡仍是 Boss stub。若使用者認為其中某幾個應該補 Boss 列，要在 `clean_raw.py` 的 `align_boss_locations()` 為它們開例外（目前是依名稱規則判斷，沒有可編輯的清單）。另 1 個是 `Perfumer Tricia`，它是 `bosses.csv` 合併列 `Perfumer Tricia and Misbegotten Warrior` 的一員，補列會重複，改用別名指到那一列（因為那一列的地點文字沒寫 Unsightly Catacombs，這條落在 A2）
+  - **A1 有 9 個名稱刻意跳過**（記在 `alignment_changes.csv`，kind 為 `A1_skipped_*`）：其中 8 個在 `npcs.csv` 或 `creatures.csv` 已有同名（或別名、或逗號前的名字）的實體——Furnace Golem、Mad Tongue Alberich、Preceptor Miriam、Chief Guardian Arghanthy、`Soldier of Godrick`（別名 Godrick Soldier）是 creature，Fire Knight Queelign、`Ensha`（別名 Ensha of the Royal Remains）、Gurranq（`Gurranq, Beast Clergyman`）是 NPC。這是我把使用者對 B1、B2 的裁決（creature 分類是對的；同時是 NPC 又是 boss 屬特例）延伸過來的判斷：不替它們新增 Boss 列，所以圖裡仍是 Boss stub。若使用者認為其中某幾個應該補 Boss 列，要在 `clean_raw.py` 的 `align_boss_locations()` 為它們開例外（目前是依名稱規則判斷，沒有可編輯的清單）。另 1 個是 `Perfumer Tricia`，它是 `bosses.csv` 合併列 `Perfumer Tricia and Misbegotten Warrior` 的一員，補列會重複，改用別名指到那一列。那一列（id=97）原本**整列是空的**，後來補上了地點與掉落物（見下方「Perfumer Tricia／Misbegotten Warrior」），所以這條現在是兩邊都有，不再落在 A2
   - **B1：`locations.csv` 列為 creature 的，不建 Boss 邊**（使用者確認 creature 分類是對的）。建圖時，若 `bosses.csv` 說某 boss 在某地點，但該地點的 `creatures` 清單有它的名字、`bosses` 清單沒有，就略過這條 Boss 邊，記為 `boss_is_creature_here`，共 **5 條**：Valiant Gargoyle @ Leyndell, Ashen Capital（2 列）、Lion Guardian @ Castle Sol、Putrid Avatar @ Elphael Brace of the Haligtree、Putrid Tree Spirit @ Grand Cloister。這些名稱在 `bosses.csv` 有自己的列，所以仍是 Boss 節點，只是不再連到這 5 個地點。**Golem 是使用者確認的例外**：原本 Golem @ Stormhill、Golem @ Ainsel River Well 也在略過清單（`locations.csv` 把 Golem 列在這兩處的 creatures），共 7 條；使用者確認那串每個地點都有 Golem，所以把 Golem 補進這兩處的 boss 清單（見 B3 那條），B1 的條件（「bosses 清單沒有它」）不再成立，兩條邊與它們的掉落物（`DROPS` +10）恢復。這兩處的地點列現在 Golem 同時出現在 creatures 與 bosses 兩欄
   - **B2：Dryleaf Dane 維持原樣**（使用者確認屬特例）：`bosses.csv` 把它當 boss 記在 Moorth Ruins，`locations.csv` 把它列成 npc，兩邊都留著，稽核顯示為剩下的那 1 條 B4，與 Patches 同屬「同一角色雙重身分」
+  - **Perfumer Tricia／Misbegotten Warrior 兩場戰鬥**（使用者 2026-09-29 確認；資料層修正，細節見 `docs/note.md`）：`bosses.csv` id=137 `Misbegotten Warrior` 的掉落物欄把 Unsightly Catacombs 與 Redmane Castle 兩場戰鬥接在一起，而 Unsightly Catacombs 那場（Misbegotten Warrior 與 Perfumer Tricia 同一場戰鬥，各有血條）對應的 id=97 `Perfumer Tricia and Misbegotten Warrior` 整列是空的。修法是把兩場戰鬥的地點與掉落物各放回自己那一列：id=97 → Unsightly Catacombs（9400 Runes、Perfumer Tricia Ashes），id=137 → Redmane Castle（16000 Runes、Ruins Greatsword），名稱與 HP 不動。`Lion Misbegotten Warrior`（Redmane Castle，A1 補的那一列）是另一隻 boss，保留。原本被當雜訊丟掉的 Perfumer Tricia（召喚灰燼）掉落現在進圖，`DROPS` 1309 → 1310、邊共 6599
 
-  **注意**：A2 中有一部分不是真的矛盾。以固定隨機種子抽樣 10 條，4 條是 `bosses.csv` 的地點欄本來就是空的（資料缺漏），5 條依我的判斷是上下層級關係（區域對地點、大地點對子區域，例如 Astel 在 `bosses.csv` 寫 Grand Cloister、`locations.csv` 寫 Lake of Rot；Godfrey 在 `bosses.csv` 寫 Leyndell, Ashen Capital、`locations.csv` 寫 Elden Throne），1 條不確定（Regal Ancestor Spirit 的 Hallowhorn Grounds／Nokron），沒有看到真正互相矛盾的。全部 54 條尚未逐一檢視
+  **注意**：A2 中有一部分不是真的矛盾。以固定隨機種子抽樣 10 條，4 條是 `bosses.csv` 的地點欄本來就是空的（資料缺漏），5 條依我的判斷是上下層級關係（區域對地點、大地點對子區域，例如 Astel 在 `bosses.csv` 寫 Grand Cloister、`locations.csv` 寫 Lake of Rot；Godfrey 在 `bosses.csv` 寫 Leyndell, Ashen Capital、`locations.csv` 寫 Elden Throne），1 條不確定（Regal Ancestor Spirit 的 Hallowhorn Grounds／Nokron），沒有看到真正互相矛盾的。全部 53 條尚未逐一檢視
 
   **對題庫的影響**：題庫裡 7 題「某地點有哪些 boss」（q06、q59–q64），對齊後在圖上實測：6 題與標準答案一致，只有 **q60**（Belurat Tower Settlement）不同——標準答案只有 Divine Beast Dancing Lion，圖多回傳 Ulcerated Tree Spirit。這條的獨立證據只有 `bosses.csv`（B4 對齊才把它補進 `locations.csv` 的清單，見上方 `sources` 的限制），而題庫標準答案是取自對齊前的 `locations.csv`。**使用者依遊戲知識確認 Belurat Tower Settlement 確實有 Ulcerated Tree Spirit，所以 q60 的標準答案已改為兩隻**（`eval/questions.jsonl`），現在 7 題都與圖一致。兩個向量基準線對 q60 已重判為 partial（原 correct，重判者為 Claude、非人工），分數見 `docs/local_run.md`、`docs/run_haiku.md`。另外逐題掃描其他提到被動過實體的 9 題（q06、q53、q65、q69、q78、q90、q96、q97、q99），標準答案都沒有被波及
 - **同一個角色依地點有不同身分（Patches）**：`bosses.csv` 把 Patches 當 boss（HP 1,191），並把他在多個地點的資料黏成一串；`locations.csv` 則只在 Murkwater Cave 的 `bosses` 欄位列他，在 Volcano Manor、The Shaded Castle 只列在 `npcs`。經使用者（玩過遊戲）確認：**Patches 在 Murkwater Cave 是 boss，在其他地點是 NPC**。處理：`build_graph.py` 的 `BOSS_ONLY_AT` 設定，讓該列的 boss 身分（HP、地點、掉落）只保留在 Murkwater Cave，其他地點（Volcano Manor、The Shaded Castle、Limgrave、Mt. Gelmir）改掛在同名的 NPC 節點上。因此 q06（Volcano Manor 有哪些 boss）圖回傳的就是標準答案 5 隻。這是逐案確認的特例，沒有套用到其他角色
@@ -162,7 +163,7 @@
 4. `Rellana's Twinblade`（remembrances.csv）與 `Rellana's Twin Blades`（weapons.csv）拼法不同，目前是一個 Weapon stub 加一個真實節點，尚未處理
 5. 177 個 `Boss` 中只有 105 個的 `hp` 能 parse 成單一數字（含空值、多階段、約略值加註記等格式的保留在 `hp_raw`）；148 個有掛上 boss_stats 的數值
 6. 同一個角色在不同檔案分屬不同類別（例如 `Ensha` 既是 NPC 也是 boss stub、`Godefroy the Grafted` 同時有 NPC 與 Boss），目前是各自獨立的節點，沒有 `SAME_AS` 關係。A1 刻意跳過的 8 個名稱（Ensha、Fire Knight Queelign、Gurranq、Furnace Golem 等）也是這種情況
-7. 別名 `Perfumer Tricia`→`Perfumer Tricia and Misbegotten Warrior` 是我判斷的，未經使用者確認
+7. 別名 `Perfumer Tricia`→`Perfumer Tricia and Misbegotten Warrior`：**已由使用者確認正確**（2026-09-29），並補上該列原本空白的地點與掉落物（見 `docs/note.md`）。同一個查證挖出的後續：其他 boss 列是否也有「地點標題黏在掉落物後面而被當表格雜訊丟掉」（例如 `Perfumer Tricia Ashes Redmane Castle :`）還沒掃描，建圖時被略過的 101 筆雜訊裡可能夾有真正的掉落物
 8. **5 個紀念品節點的名稱黏字**（S4 挖出來的）：`Remembrance of theBlasphemous`、`theLichdragon`、`theNaturalborn`、`theStarscourge`、`theDragonlord`，來源檔 `remembrances.csv` 的名稱本來就少了空格。建圖的 `norm()` 會修這類黏字所以比對沒問題，但節點名稱保留原樣，查詢工具會原樣回傳。**使用者決定不修**（2026-09-28），只記錄；同一次掃描的其他黏字與修正見 `docs/note.md`「黏字」一節
 9. **同名 Item 節點（已全部合併）**（S4 挖出來的）：實際是 43 組、87 個節點（見上方「同名 Item 合併」）。使用者決定合併，已實作；原本先排除的 `Lord of Blood's Favor`（浸血前後）與 `Unalloyed Gold Needle`（斷掉 → 修復 → Millicent）經使用者確認是同一物品的不同狀態，也已合併，各狀態的取得方式留在 `merged_variants`。原本的重複主要在 `consumables.csv` 與 `remembrances.csv`（9 組）、`tools.csv` 之間。抽看的一組中，`consumables.csv` 的那份沒有任何邊，關係都在 `remembrances.csv` 那份，多半是孤立的重複節點。Larval Tear 兩份的 `dlc` 標記不一致（1 與 0），使用者確認它是本篇（`dlc=0`），已在 `clean_raw.py` 把 `keyItems.csv` id=6 改為 0（見 `docs/note.md`）；已合併。詳見 `docs/graph-tools.md`
 10. **語料庫還沒去重**（同名 Item 合併的後續）：語料庫 `corpus.jsonl` 是每個 CSV 列一篇文件，這次合併只動了圖，向量索引裡同名的仍是兩篇以上（共 44 篇重複）。題庫的 `source` 沒有指到會被去掉的那一列，所以去重不影響 recall 的比對。要不要去重、被去掉的文件的欄位（例如 `consumables.csv` 那份的 `effect`）要不要併進保留的文件，待決定。向量索引本來就要重建，同時做最省事

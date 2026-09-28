@@ -57,6 +57,17 @@
 - **預期問題**：`Jagged Peak Drake` 的地點欄位有一個 key 混了 HTML 標籤 `<a class="wiki_link" href="/Jagged+Peak" title="Elden Ring Jagged Peak">Jagged Peak</a>:`
 - **實際改正**：清成純文字 `Jagged Peak:`
 
+### 地點與掉落物欄位：兩場戰鬥被接在一起、另一列是空的（S4 查 Perfumer Tricia 時發現，2026-09-29）
+- **預期問題**：`locations.csv` 的 Unsightly Catacombs 列出 boss `Perfumer Tricia`，但 `bosses.csv` 沒有這個名稱，只有合併列 id=97 `Perfumer Tricia and Misbegotten Warrior`。查那一列發現它**整列是空的**（`HP`、`Locations & Drops` 都空）；真正的資料在 id=137 `Misbegotten Warrior`（`HP ≈ 3560 (Field Boss)`），但它的掉落物欄把兩場戰鬥接在一起：`{'Unsightly Catacombs': ['Unsightly Catacombs :', '9400 Runes', 'Perfumer Tricia Ashes Redmane Castle :', '16000 Runes', 'Ruins Greatsword']}`。只有一個地點 key，第二個地點的標題 `Redmane Castle :` 被黏在上一個掉落物後面。建圖時它被當表格雜訊丟掉，連 `Perfumer Tricia Ashes` 一起消失，`Ruins Greatsword` 與符文則全算在 Unsightly Catacombs 頭上
+- **使用者確認**：Unsightly Catacombs 是 Misbegotten Warrior 與 Perfumer Tricia 同時出現的**同一場戰鬥**，兩者各有血條；Redmane Castle 另有一隻 Misbegotten Warrior 是 boss；`Lion Misbegotten Warrior`（`locations.csv` 的 Redmane Castle 也列了）是另一隻 boss，不是這一隻；Perfumer Tricia Ashes 是 Unsightly Catacombs 那場掉的、Ruins Greatsword 是 Redmane Castle 那隻掉的；HP ≈ 3560 屬於 Redmane Castle 那隻 Misbegotten Warrior
+- **實際改正**（`clean_raw.py` 的 `BOSS_LOCATION_FIXES`，原始資料不是預期的樣子會直接報錯）：
+  - id=97 `Perfumer Tricia and Misbegotten Warrior`：`Locations & Drops` 由空改為 `{'Unsightly Catacombs': ['9400 Runes', 'Perfumer Tricia Ashes']}`；`HP` 維持空（雙人戰沒有 HP 資料）
+  - id=137 `Misbegotten Warrior`：`Locations & Drops` 改為 `{'Redmane Castle': ['16000 Runes', 'Ruins Greatsword']}`；`HP` 維持 `≈ 3560 ( Field Boss )`
+  - 名稱都不改。這跟 Margit、Dancing Lion 同一原則：兩場打法不同的戰鬥分成不同節點
+- **附帶的對齊調整**：B4 對齊多了一條判斷「地點清單裡已有這隻合併列名稱的其中一員（`Perfumer Tricia`）就不再補整個合併列名稱」，避免 Unsightly Catacombs 的清單同時出現 `Perfumer Tricia` 與 `Perfumer Tricia and Misbegotten Warrior`
+- **結果**：id=97 連到 Unsightly Catacombs（`bosses.csv`＋`locations.csv` 兩邊都有）、掉落 `Perfumer Tricia`（召喚灰燼）、符文 9400；id=137 連到 Redmane Castle、掉落 Ruins Greatsword、符文 16000，不再連 Unsightly Catacombs。`Perfumer Tricia` 別名（`build_graph.py`）經使用者確認是對的
+- **沒有做的**：其他 boss 列是否也有「地點標題黏在掉落物後面而被當雜訊丟掉」的情形，還沒有掃描
+
 ## locations.csv（S1 出題時才發現，非 S0 原本掃到的）
 
 - **預期問題**：Castle Ensis 的 `bosses` 欄位放了兩個掉落物名稱，真正的 boss 名稱被放進 `npcs` 欄位
