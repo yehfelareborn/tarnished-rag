@@ -1,5 +1,13 @@
 kind,context,text,source_file
+boss_is_creature_here,"Valiant Gargoyle @ Leyndell, Ashen Capital","Leyndell, Ashen Capital:",data/processed/dlc_scrape/bosses.csv
+boss_is_creature_here,"Valiant Gargoyle @ Leyndell, Ashen Capital","Leyndell, Ashen Capital:",data/processed/dlc_scrape/bosses.csv
 boss_location,Stonedigger Troll,,data/processed/dlc_scrape/bosses.csv
+boss_is_creature_here,Golem @ Ainsel River Well,"Stormhill Castle Morne Ainsel River Well Leyndell, Royal Capital Mountaintops of the Giants",data/processed/dlc_scrape/bosses.csv
+boss_is_creature_here,Golem @ Stormhill,"Stormhill Castle Morne Ainsel River Well Leyndell, Royal Capital Mountaintops of the Giants",data/processed/dlc_scrape/bosses.csv
+boss_is_creature_here,Lion Guardian @ Castle Sol,"Stormveil Castle Fort Gael (Caelid) Redmane Castle Castle Sol Leyndell, Royal Capital",data/processed/dlc_scrape/bosses.csv
+boss_is_creature_here,Putrid Avatar @ Elphael Brace of the Haligtree,"Elphael, Brace of the Haligtree:",data/processed/dlc_scrape/bosses.csv
+boss_is_creature_here,Putrid Tree Spirit @ Grand Cloister,Grand Cloister,data/processed/dlc_scrape/bosses.csv
+column_contaminated,Belurat Tower Settlement [creatures],Fire Knight Queelign,data/processed/dlc_scrape/locations.csv
 column_contaminated,Cathedral of Manus Metyr [creatures],Finger Mimic,data/processed/dlc_scrape/locations.csv
 column_contaminated,Church of the Crusade [creatures],Ash of War: Flame Skewer,data/processed/dlc_scrape/locations.csv
 column_contaminated,Murkwater Catacombs [npcs],Root Resin,data/processed/dlc_scrape/locations.csv

@@ -1,0 +1,40 @@
+kind,boss,location
+B4_add_boss_to_location_list,Lichdragon Fortissax,Deeproot Depths
+B4_add_boss_to_location_list,Dancer of Ranah,Southern Nameless Mausoleum
+B4_add_boss_to_location_list,"Margit, the Fell Omen (Stormveil Castle)",Stormveil Castle
+B4_add_boss_to_location_list,Death Rite Bird,Academy Gate Town
+B4_add_boss_to_location_list,Fallingstar Beast,Finger Ruins of Dheo
+B4_add_boss_to_location_list,"Rick, Soldier Of God",Stranded Graveyard
+B4_add_boss_to_location_list,Erdtree Avatar,Deeproot Depths
+B4_add_boss_to_location_list,Ulcerated Tree Spirit,"Leyndell, Royal Capital"
+B4_add_boss_to_location_list,Ulcerated Tree Spirit,"Leyndell, Ashen Capital"
+B4_add_boss_to_location_list,Ulcerated Tree Spirit,Belurat Tower Settlement
+B4_add_boss_to_location_list,Crucible Knight Siluria,Deeproot Depths
+B4_add_boss_to_location_list,Deathbird,Warmaster's Shack
+B4_add_boss_to_location_list,Fia's Champions,Deeproot Depths
+B4_add_boss_to_location_list,Magma Wyrm,Dragon's Pit
+B4_add_boss_to_location_list,Misbegotten Warrior,Unsightly Catacombs
+B4_add_boss_to_location_list,"Mohg, the Omen",Subterranean Shunning-Grounds
+B4_add_boss_to_location_list,Nox Swordstress & Nox Monk,"Sellia, Town of Sorcery"
+B4_add_boss_to_location_list,Putrid Avatar,Minor Erdtree (Caelid)
+B4_add_boss_to_location_list,Putrid Tree Spirit,Elphael Brace of the Haligtree
+B4_add_boss_to_location_list,Wormface,Minor Erdtree (Mt. Gelmir)
+A1_add_boss_row,Swordhand of Night Anna,Cathedral of Manus Metyr
+A1_add_boss_row,Swordhand of Night Jolan,Cathedral of Manus Metyr
+A1_skipped_same_name_npc_or_creature_exists,Fire Knight Queelign,Church of the Crusade
+A1_skipped_same_name_npc_or_creature_exists,Furnace Golem,Ruins of Unte
+A1_skipped_same_name_npc_or_creature_exists,Mad Tongue Alberich,Roundtable Hold
+A1_skipped_same_name_npc_or_creature_exists,Ensha,Roundtable Hold
+A1_skipped_same_name_npc_or_creature_exists,Soldier of Godrick,Stranded Graveyard
+A1_skipped_same_name_npc_or_creature_exists,Preceptor Miriam,Carian Study Hall
+A1_add_boss_row,Lion Misbegotten Warrior,Redmane Castle
+A1_add_boss_row,Nox Swordstress & Nox Priest,"Sellia, Town of Sorcery"
+A1_skipped_part_of_existing_boss_row,Perfumer Tricia,Unsightly Catacombs
+A1_add_boss_row,Elden Beast,"Leyndell, Ashen Capital"
+A1_skipped_same_name_npc_or_creature_exists,Gurranq,Bestial Sanctum
+A1_add_boss_row,Elder Dragon Greyoll,Fort Faroth
+A1_add_boss_row,Putrid Crystalians,Sellia Hideaway
+A1_add_boss_row,Stray Mimic Tear,Forbidden Lands
+A1_skipped_same_name_npc_or_creature_exists,Chief Guardian Arghanthy,Guardians' Garrison
+A1_add_boss_row,Stray Mimic Tear,Hidden Path to the Haligtree
+A1_add_boss_row,Walking Mausoleum,Deeproot Depths

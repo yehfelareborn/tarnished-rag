@@ -26,6 +26,11 @@ PROC = ROOT / "data" / "processed" / "dlc_scrape"
 STATS_CSV = ROOT / "data" / "raw" / "boss_stats" / "elden_ring_boss_stats_clean.csv"
 UNMATCHED_CSV = ROOT / "data" / "processed" / "graph_unmatched.csv"
 
+# bosses.csv 裡的角色只在部分地點是 boss、其他地點是 NPC：row id -> {npc 名稱, boss 身分成立的地點}。
+# 使用者（玩過遊戲）於 2026-09-28 確認：Patches 在 Murkwater Cave 是 boss，在其他地點（Volcano Manor、The Shaded Castle 等）是 NPC。
+# 該列的 boss 身分（HP、地點、掉落）只保留在 boss_at 列出的地點，其他地點改掛在同名 NPC 節點上。
+BOSS_ONLY_AT = {"141": {"npc": "Patches", "boss_at": {"Murkwater Cave"}}}
+
 
 # ---------------------------------------------------------------- 讀檔／名稱正規化
 
@@ -249,6 +254,7 @@ ALIASES = {norm(k): norm(v) for k, v in {
     "Alexander": "Iron Fist Alexander",
     "Ranni the Witch": "Ranni Witch Carian Lunar Princess",
     "Ensha": "Ensha of the Royal Remains",
+    "Perfumer Tricia": "Perfumer Tricia and Misbegotten Warrior",
 }.items()}
 
 
@@ -321,8 +327,24 @@ def stub(label, text, source, dlc=0, **props):
     return uid
 
 
+def _scan_places(text, min_len=6):
+    """在整串文字中掃描已知的地點／區域名（長的優先、互不重疊；名稱本身含逗號也能對到）。"""
+    rest = f" {norm(text)} "
+    names = sorted([(k, "Location") for k in label_index["Location"]] + [(k, "Region") for k in label_index["Region"]],
+                   key=lambda x: len(x[0]), reverse=True)
+    out = []
+    for n, lab in names:
+        if len(n) < min_len:
+            continue
+        pat = f" {n} "
+        if pat in rest:
+            out.append((label_index[lab][n][0], "substring" if lab == "Location" else "region"))
+            rest = rest.replace(pat, " # ")
+    return out
+
+
 def resolve_location(text):
-    """精確 → 逗號分段 → 在字串中掃描已知地點名（長的優先、互不重疊）。回傳 [(uid, how)]。"""
+    """精確 → 區域 → 整串掃描（含逗號的地點名也能對到）→ 逗號切段的精確比對（後備）。回傳 [(uid, how)]。"""
     text = re.sub(r"<[^>]+>", "", html.unescape(text))
     key = norm(text)
     hit = label_index["Location"].get(key)
@@ -331,25 +353,16 @@ def resolve_location(text):
     reg = label_index["Region"].get(key)
     if reg:
         return [(reg[0], "region")]
-    out = []
-    parts = [p for p in re.split(r"[,;]", text) if p.strip()]
-    if len(parts) > 1:
-        for p in parts:
-            h = label_index["Location"].get(norm(p))
-            if h:
-                out.append((h[0], "part"))
-        if out:
-            return out
-    names = sorted(label_index["Location"], key=len, reverse=True)
-    rest = f" {key} "
-    for n in names:
-        if len(n) < 8:
-            continue
-        pat = f" {n} "
-        if pat in rest:
-            out.append((label_index["Location"][n][0], "substring"))
-            rest = rest.replace(pat, " # ")
-    return out
+    out = _scan_places(text)
+    if out:
+        return out
+    for p in (p for p in re.split(r"[,;]", text) if p.strip()):
+        pk = norm(p)
+        if label_index["Location"].get(pk):
+            out.append((label_index["Location"][pk][0], "part"))
+        elif label_index["Region"].get(pk):
+            out.append((label_index["Region"][pk][0], "region"))
+    return list(dict.fromkeys(out))
 
 
 QTY = re.compile(r"\s+(?:x\s*\d+|\d+\s*x)$", re.I)
@@ -428,10 +441,26 @@ def build_edges(loc_rows):
 
     # Boss -LOCATED_AT-> Location（含符文數）、Boss -DROPS-> 物品（含 at_location）
     boss_loc = defaultdict(set)   # boss uid -> {location uid}
+    rel_sources = defaultdict(set)  # (擁有者 uid, location uid) -> {'bosses.csv', 'locations.csv'}
+    bnorm = lambda x: norm(re.sub(r"\s*\(.*\)$", "", x or ""))
+    loc_lists = {f"Location:locations:{lr['id']}": ({bnorm(x) for x in parse_list(lr["bosses"])},
+                                                    {bnorm(x) for x in parse_list(lr["creatures"])})
+                 for lr in loc_rows}
     rows, src = load("bosses.csv")
     for r in rows:
         buid = f"Boss:bosses:{r['id']}"
         bdlc = node_props[buid]["dlc"]
+        split = BOSS_ONLY_AT.get(r["id"])
+        npc_uid = resolve(split["npc"], ["NPC"]) if split else None
+        if split and not npc_uid:
+            log_unmatched("npc_for_boss_row", r["name"], split["npc"], src)
+
+        def owner(luid, buid=buid, split=split, npc_uid=npc_uid):
+            """這個地點的邊掛在 Boss 還是 NPC 上（只有 BOSS_ONLY_AT 列出的角色會分開）。"""
+            if split and npc_uid and node_props[luid]["name"] not in split["boss_at"]:
+                return npc_uid
+            return buid
+
         for loc_key, items in parse_dict(r["Locations & Drops"]).items():
             if not isinstance(loc_key, str):
                 continue
@@ -450,12 +479,27 @@ def build_edges(loc_rows):
                 locs = [(stub("Location", clean_loc, src, bdlc), "stub")]
             elif not locs:
                 log_unmatched("boss_location", r["name"], loc_key, src)
+            kept = []
             for luid, how in locs:
-                boss_loc[buid].add(luid)
-                add_edge("LOCATED_AT", buid, luid, src, runes=runes, match=how)
+                blist, clist = loc_lists.get(luid, (set(), set()))
+                if owner(luid) == buid and bnorm(r["name"]) in clist and bnorm(r["name"]) not in blist:
+                    # locations.csv 把它列成該地點的 creature（不是 boss），經使用者確認以 locations.csv 為準
+                    stats["boss_edge_skipped_creature_here"] += 1
+                    log_unmatched("boss_is_creature_here", f"{r['name']} @ {node_props[luid]['name']}", loc_key, src)
+                    continue
+                kept.append((luid, how))
+            locs = kept
+            for luid, how in locs:
+                o = owner(luid)
+                if o == buid:
+                    boss_loc[buid].add(luid)
+                rel_sources[(o, luid)].add("bosses.csv")
+                add_edge("LOCATED_AT", o, luid, src, runes=runes, match=how)
+            at_owners = [(node_props[u]["name"], owner(u)) for u, _ in locs] or [(loc_name, buid)]
             for d in drops:
                 for tuid, note in (item_targets(d, src, bdlc) or []):
-                    add_edge("DROPS", buid, tuid, src, at_location=loc_name, note=note)
+                    for at, o in at_owners:
+                        add_edge("DROPS", o, tuid, src, at_location=at, note=note)
 
     # locations.csv 的 bosses / npcs / creatures / items 清單
     rows, src = load("locations.csv")
@@ -483,6 +527,7 @@ def build_edges(loc_rows):
                 boss_by_base[norm(b)] = cands
             at = [c for c in cands if luid in boss_loc[c]]
             for c in (at or cands[:1]):
+                rel_sources[(c, luid)].add("locations.csv")
                 if luid not in boss_loc[c]:
                     add_edge("LOCATED_AT", c, luid, src, match="from_location_list")
                     boss_loc[c].add(luid)
@@ -492,12 +537,6 @@ def build_edges(loc_rows):
                     stats["noise_skipped"] += 1
                     continue
                 uid = resolve(n, [label])
-                if not uid:
-                    alt = resolve(n, ["NPC", "Boss", "Creature"])   # 放錯欄位的真實體（例如 creatures 欄位裡的 NPC）
-                    if alt:
-                        stats["entity_in_other_column"] += 1
-                        add_edge("LOCATED_AT", alt, luid, src, note=f"listed in {col} column")
-                        continue
                 if not uid and (resolve(n, NON_CREATURE_ITEM_LIKE) or norm(n) in item_strings):
                     log_unmatched("column_contaminated", f"{r['name']} [{col}]", n, src)   # 欄位裡放的其實是物品
                     for tuid, note in (item_targets(n, src, ldlc) or []):
@@ -551,6 +590,11 @@ def build_edges(loc_rows):
                     continue
                 sk = resolve(p["skill"], ["Skill"]) or stub("Skill", p["skill"], p["source_file"], p["dlc"])
                 add_edge(rel, uid, sk, p["source_file"])
+
+    for e in edges["LOCATED_AT"]:                       # 記錄每條 Boss↔地點的關係是哪個檔案說的
+        k = (e["a"], e["b"])
+        if k in rel_sources:
+            e["props"]["sources"] = sorted(rel_sources[k])
 
 
 # ---------------------------------------------------------------- boss_stats 合併

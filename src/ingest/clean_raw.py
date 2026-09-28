@@ -7,6 +7,10 @@
 """
 import ast
 import csv
+import difflib
+import html
+import re
+import unicodedata
 from pathlib import Path
 
 RAW = Path(__file__).resolve().parents[2] / "data" / "raw" / "dlc_scrape"
@@ -307,6 +311,129 @@ def fix_bosses() -> None:
           f"split {len(SPLIT_MULTI_ENCOUNTER_IDS)} boss(es) into {split_count} rows")
 
 
+def _n(x):
+    """比對用正規化：去重音、修 theX 黏字、去撇號與標點、小寫。"""
+    x = "".join(c for c in unicodedata.normalize("NFKD", html.unescape(x or "")) if not unicodedata.combining(c))
+    x = re.sub(r"\bthe([A-Z])", r"the \1", x).lower().replace("'", "")
+    return re.sub(r"[^a-z0-9]+", " ", x).strip()
+
+
+def _base(x):
+    return re.sub(r"\s*\(.*\)$", "", x or "").strip()
+
+
+_BOSS_ALIAS = {_n("Morgott, the Omen King"): _n("Morgott The Grace-Given Veiled Monarch Omen King"),
+               _n("Rennala, Queen of the Full Moon"): _n("Rennala Carian Queen of the Full Moon")}
+
+
+def _same(a, b):
+    x, y = _n(_base(a)), _n(_base(b))
+    if x == y or _BOSS_ALIAS.get(x) == y or _BOSS_ALIAS.get(y) == x:
+        return True
+    return difflib.SequenceMatcher(None, x, y).ratio() >= 0.93 and re.findall(r"\d+", x) == re.findall(r"\d+", y)
+
+
+# locations.csv 的 bosses 清單裡的別名（與 src/graph/build_graph.py 的 ALIASES 一致）：名稱其實指向 npc／creature
+_A1_ALIAS = {_n("Soldier of Godrick"): _n("Godrick Soldier"), _n("Ensha"): _n("Ensha of the Royal Remains")}
+
+
+def _component_of(name, boss_names):
+    """單一名稱（不含 & / and）是否為某個合併列名（如 'Perfumer Tricia and Misbegotten Warrior'）的其中一員。"""
+    if re.search(r"\s(?:&|and)\s", name):
+        return False
+    return any(_same(name, part) for b in boss_names for part in re.split(r"\s+(?:&|and)\s+", _base(b)))
+
+
+def _plist(s):
+    try:
+        v = ast.literal_eval(s) if s and s.strip() else []
+        return [str(i).strip() for i in v] if isinstance(v, list) else [str(v).strip()]
+    except (ValueError, SyntaxError):
+        return []
+
+
+def align_boss_locations() -> None:
+    """讓 bosses.csv 與 locations.csv 對 Boss↔地點 的說法對齊（使用者決定的 A1、B4 兩類）。
+
+    B4：bosses.csv 的地點 key 精確對上某個地點，但該地點的 `bosses` 清單沒有這隻 boss
+        → 把 boss 補進 locations.csv 該地點的 `bosses` 清單。
+        不處理：locations.csv 把它列成 creature（B1）或 npc（B2）的——使用者確認 locations.csv 是對的／屬特例。
+    A1：locations.csv 的 `bosses` 清單列了，但 bosses.csv 沒有這隻 boss 的列
+        → 在 bosses.csv 補一列（只有名稱與地點，沒有 HP 等資料；dlc 沿用地點的 dlc）。
+
+    不動 B3（地點是從黏在一起的多地點字串推得）與 A2（bosses.csv 有這隻但地點文字沒寫這裡），
+    這兩類使用者要自己檢視。每一項變更都記錄到 data/processed/alignment_changes.csv。
+    """
+    bpath, lpath = OUT / "bosses.csv", OUT / "locations.csv"
+    with bpath.open(encoding="utf-8", newline="") as f:
+        breader = csv.DictReader(f); bosses = list(breader); bfields = breader.fieldnames
+    with lpath.open(encoding="utf-8", newline="") as f:
+        lreader = csv.DictReader(f); locs = list(lreader); lfields = lreader.fieldnames
+    loc_by_norm = {_n(r["name"]): r for r in locs}
+    changes = []
+
+    # ---- B4 ----
+    for br in bosses:
+        d = ast.literal_eval(br["Locations & Drops"]) if br["Locations & Drops"] else {}
+        for key in (k for k in d if isinstance(k, str)):
+            L = loc_by_norm.get(_n(re.sub(r"<[^>]+>", "", key)))
+            if not L:
+                continue
+            lst = _plist(L["bosses"])
+            if any(_same(br["name"], x) for x in lst):
+                continue
+            if any(_same(br["name"], x) for x in _plist(L["creatures"])) or any(_same(br["name"], x) for x in _plist(L["npcs"])):
+                continue
+            lst.append(_base(br["name"]))
+            L["bosses"] = repr(lst)
+            changes.append(("B4_add_boss_to_location_list", br["name"], L["name"]))
+
+    # ---- A1 ----
+    def _names(path):
+        with path.open(encoding="utf-8", newline="") as f:
+            rows = [r["name"] for r in csv.DictReader(f)]
+        # 連同逗號前的部分一起收（'Gurranq, Beast Clergyman' → 'Gurranq'）
+        return {_n(_base(x)) for x in rows} | {_n(_base(x.split(",")[0])) for x in rows}
+    other_class = _names(RAW / "npcs.csv") | _names(OUT / "creatures.csv")
+    next_id = max(int(r["id"]) for r in bosses) + 1
+    added = {}
+    for L in locs:
+        for name in _plist(L["bosses"]):
+            key = _n(_base(name))
+            row = added.get(key)
+            if row is None:      # 這次新增的列，後續地點要繼續補進它的地點欄，所以只對「尚未新增」的名稱做存在性檢查
+                if not name or any(_same(name, br["name"]) for br in bosses):
+                    continue
+                if key in other_class or _A1_ALIAS.get(key) in other_class:
+                    changes.append(("A1_skipped_same_name_npc_or_creature_exists", name, L["name"]))
+                    continue
+                if _component_of(name, [br["name"] for br in bosses]):
+                    changes.append(("A1_skipped_part_of_existing_boss_row", name, L["name"]))
+                    continue
+                row = {k: "" for k in bfields}
+                row.update({"id": str(next_id), "name": name, "Locations & Drops": "{}", "dlc": "0"})
+                next_id += 1
+                added[key] = row
+                bosses.append(row)
+            d = ast.literal_eval(row["Locations & Drops"])
+            d[L["name"]] = []
+            row["Locations & Drops"] = repr(d)
+            if L.get("dlc") == "1":
+                row["dlc"] = "1"
+            changes.append(("A1_add_boss_row", name, L["name"]))
+
+    for path, rows, fields in ((bpath, bosses, bfields), (lpath, locs, lfields)):
+        with path.open("w", encoding="utf-8", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=fields); w.writeheader(); w.writerows(rows)
+    audit = OUT.parent / "alignment_changes.csv"
+    with audit.open("w", encoding="utf-8", newline="") as f:
+        w = csv.writer(f); w.writerow(["kind", "boss", "location"]); w.writerows(changes)
+    from collections import Counter
+    c = Counter(k for k, _, _ in changes)
+    print(f"align_boss_locations: B4 補進地點清單 {c['B4_add_boss_to_location_list']} 筆；A1 補 bosses.csv {len(added)} 列（{c['A1_add_boss_row']} 條地點關係）；"
+          f"A1 跳過（同名 npc/creature）{c['A1_skipped_same_name_npc_or_creature_exists']}、（合併列的一員）{c['A1_skipped_part_of_existing_boss_row']}")
+
+
 if __name__ == "__main__":
     normalize_dlc_flag("armors.csv")
     normalize_dlc_flag("incantations.csv")
@@ -315,3 +442,4 @@ if __name__ == "__main__":
     fix_locations()
     fix_creatures()
     fix_bosses()
+    align_boss_locations()
