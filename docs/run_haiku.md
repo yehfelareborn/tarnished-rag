@@ -29,7 +29,7 @@
 
 ## 答案正確率
 
-判定方式：106 題全部由 Claude 逐題對照 `eval/questions.jsonl` 的標準答案判定（**非人工判定**）。correct = 1、partial = 0.5、wrong = 0。判定與理由存於 `eval/results/vector_baseline_anthropic_judgments.json`（只列非 correct 的題，其餘預設 correct）。
+判定方式：106 題全部由 Claude 逐題對照 `eval/questions.jsonl` 的標準答案判定（**非人工判定**）。判定方式與後續規劃（雙模型交叉驗證＋人工仲裁）另見 `docs/eval-methodology.md`。correct = 1、partial = 0.5、wrong = 0。判定與理由存於 `eval/results/vector_baseline_anthropic_judgments.json`（只列非 correct 的題，其餘預設 correct）。
 
 | 題型 | 題數 | 答案正確率 | 檢索 recall@5 |
 |---|---|---|---|

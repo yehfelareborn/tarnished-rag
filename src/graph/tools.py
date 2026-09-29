@@ -85,9 +85,10 @@ class GraphTools:
         """把所有節點的名稱載入記憶體（約 3900 個），供實體連結與名稱解析使用。"""
         rows = self._run("MATCH (n:Entity) RETURN n.uid AS uid, n.name AS name, "
                          "[x IN labels(n) WHERE x <> 'Entity'][0] AS label, n.dlc AS dlc, coalesce(n.stub, false) AS stub, "
-                         "coalesce(n.aliases, []) AS aliases")
+                         "coalesce(n.aliases, []) AS aliases, n.source_file AS source_file, n.row_id AS row_id")
         self.by_uid = {r["uid"]: {"uid": r["uid"], "label": r["label"], "name": r["name"], "dlc": r["dlc"], "stub": r["stub"]}
                        for r in rows}
+        self.source = {r["uid"]: {"file": r["source_file"], "row_id": r["row_id"]} for r in rows}
         self.index = defaultdict(lambda: defaultdict(list))     # 名稱 key -> 比對類型 -> [uid]
         for r in rows:
             name = r["name"] or ""
@@ -135,6 +136,11 @@ class GraphTools:
             for uids in self.index[k].values():
                 out += [dict(self.by_uid[u], match=f"fuzzy:{score:.2f}") for u in uids if label in (None, self.by_uid[u]["label"])]
         return out[:5]
+
+    def source_of(self, uid):
+        """節點來源 {file, row_id}（建圖時記錄的資料檔與列號）；uid 不存在回傳 None。
+        agent 用它記錄「這題檢索到了哪些來源」，不放進給 LLM 的結果。"""
+        return self.source.get(uid)
 
     def _summary(self, uid):
         e = self.by_uid[uid]

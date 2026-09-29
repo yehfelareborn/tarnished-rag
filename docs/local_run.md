@@ -82,6 +82,8 @@
 
 ## 判定的可信度
 
+判定方式與後續規劃（雙模型交叉驗證＋人工仲裁）另見 `docs/eval-methodology.md`。
+
 - 評分檔 `vector_baseline_grading.jsonl`、`vector_baseline_scores.json` 不是這條對話產生的，而是同一個 session 被兩個終端機同時 resume 時，另一個 Claude Code 行程產生的（14:03:49）。做法是 `eval/draft_judgment.py` 用字詞重疊自動初判，再由該行程自行複查被標記的題。**沒有人工判定**
 - 我重新稽核了 multi_hop、comparison、false_premise、unanswerable 全部題目與其餘題型的低重疊題，判定大致正確，但：
   - **q08 判錯**：標準答案是 Ensha，模型答「沒有人同時是 NPC 和 boss」，卻被判 correct，應為 wrong。**已改為 wrong**（評分檔該題加 `audit_note`）並重跑 score

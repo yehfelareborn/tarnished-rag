@@ -91,6 +91,14 @@ def test_resolve_same_name_different_labels(t):
     assert {m["label"] for m in t.resolve("Patches")} >= {"Boss", "NPC"}
 
 
+# ---------------------------------------------------------------- source_of
+
+def test_source_of(t):
+    assert t.source_of("Boss:bosses:17") == {"file": "data/processed/dlc_scrape/bosses.csv", "row_id": "17"}
+    assert t.source_of("Item:remembrances:21")["row_id"] == "21"
+    assert t.source_of("Boss:no:such") is None
+
+
 # ---------------------------------------------------------------- link_entities
 
 def test_link_entities_q09(t):

@@ -46,7 +46,7 @@ with GraphTools() as t:
 - **`find_path` 預設排除 `LOCATED_IN`**：Region 會把同區域的一切連在一起，路徑變雜訊。同一個 Location 底下的兩個實體仍會經 `LOCATED_AT` 得到 2 步路徑，這是資料本來的關係，不代表因果。
 - **`filter_by_attribute` 的安全與型別**：欄位名稱必須存在於該標籤（白名單，也擋掉注入式的名稱）、值一律用參數。數值運算子（`<`、`<=`、`>`、`>=`）對欄位用 `toFloatOrNull`，所以存成字串的數字（Weapon 的 `fp_cost` 是 `"25"`）也能比，轉不了的視為不符。預設排除 stub（`include_stubs=True` 才含）。
 - **唯讀**：連線用 `READ_ACCESS`，而且工具裡沒有任何寫入的 Cypher。（Neo4j Community 不強制存取模式，所以真正的保證是程式碼裡沒有寫入。）
-- **來源可追溯**：每個實體帶 `source`（檔案＋列號），每條邊帶建圖時記錄的來源屬性；Boss↔地點的邊帶 `sources`（哪個檔案說的），回答時可以引用。
+- **來源可追溯**：每個實體帶 `source`（檔案＋列號），每條邊帶建圖時記錄的來源屬性；Boss↔地點的邊帶 `sources`（哪個檔案說的），回答時可以引用。`GraphTools.source_of(uid)` 回報節點的來源（檔案＋列號），S5 的 agent 用它記錄「這題檢索到了哪些來源」。
 
 ## 測試與題庫檢查
 
@@ -77,5 +77,5 @@ with GraphTools() as t:
 
 ## 還沒做
 
-- 給 LLM 的工具定義（JSON schema、描述文字）：S5。
+- 給 LLM 的工具定義（JSON schema、描述文字）：S5 已寫在 `src/agent/graph_rag.py`（見 `docs/agent.md`），尚未對真實 LLM 實測。
 - text-to-Cypher：計畫書的延伸項目 3，不在 S4。
