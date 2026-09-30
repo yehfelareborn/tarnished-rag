@@ -2,29 +2,29 @@
   "comparison": {
     "n_questions": 10,
     "n_judged": 10,
-    "answer_accuracy": 0.9,
+    "answer_accuracy": 1.0,
     "retrieval_recall_at_5": 0.95,
     "unanswerable_refusal_rate": null
   },
   "false_premise": {
     "n_questions": 6,
     "n_judged": 6,
-    "answer_accuracy": 0.8333333333333334,
-    "retrieval_recall_at_5": 0.5833333333333334,
+    "answer_accuracy": 0.16666666666666666,
+    "retrieval_recall_at_5": 0.75,
     "unanswerable_refusal_rate": null
   },
   "multi_hop": {
     "n_questions": 18,
     "n_judged": 18,
-    "answer_accuracy": 0.8333333333333334,
-    "retrieval_recall_at_5": 0.8148148148148149,
+    "answer_accuracy": 1.0,
+    "retrieval_recall_at_5": 0.9166666666666666,
     "unanswerable_refusal_rate": null
   },
   "numeric": {
     "n_questions": 22,
     "n_judged": 22,
-    "answer_accuracy": 0.9545454545454546,
-    "retrieval_recall_at_5": 0.9545454545454546,
+    "answer_accuracy": 1.0,
+    "retrieval_recall_at_5": 1.0,
     "unanswerable_refusal_rate": null
   },
   "relational": {
@@ -37,7 +37,7 @@
   "single_fact": {
     "n_questions": 22,
     "n_judged": 22,
-    "answer_accuracy": 1.0,
+    "answer_accuracy": 0.9545454545454546,
     "retrieval_recall_at_5": 1.0,
     "unanswerable_refusal_rate": null
   },

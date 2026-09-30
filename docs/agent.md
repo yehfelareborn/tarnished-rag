@@ -1,6 +1,6 @@
 # S5：讓 LLM 自己挑工具（向量搜尋／圖查詢）
 
-狀態：**程式與單元測試已寫好，尚未執行**（2026-09-29）。沒有啟動過 llama 服務，沒有對真實的 LLM 跑過任何一題，單元測試也還沒跑。下面「還沒驗證的事」是實跑時要看的重點。
+狀態：**已對真實模型跑完全部 106 題 × 3 組（A／B／C）並判分**（2026-09-30）。79 個單元測試全過；B、C 兩組各跑滿 106 題（分批、溫度監控，避免筆電過熱關機，見下）；A 組用重建後的向量索引（3649 篇）重跑。三組的分數與具體發現見下方「已驗證的結果」。
 
 ## 目的
 
@@ -15,6 +15,7 @@
 | `tests/test_agent.py` | 單元測試，用假的 LLM 與假的工具，不需要模型、Neo4j、向量索引 |
 | `scripts/start_llama_servers.sh` | 啟動 embedding（8801）與生成（8802）兩個 llama-server |
 | `src/graph/tools.py` | 新增 `GraphTools.source_of(uid)`，回報節點來源（檔案＋列號），agent 用它記錄檢索到哪些來源 |
+| `scripts/run_agent_paced.sh` | 分批跑 106 題（預設每批 10 題、每輪目標 300 秒），批次間監控 GPU／CPU 溫度，沒降到安全值以下就多等，避免這台筆電（ASUS，ACPI 熱管理有 bug，過熱時似乎直接硬斷電、不留 log）長時間高負載跑到過熱關機 |
 
 ## 兩種模式，共用同一個迴圈
 
@@ -54,34 +55,50 @@
 | `latency` | `total_s`、`llm_s`、`tool_calls`（呼叫次數）|
 | `error` | 只有伺服器錯誤時出現（例如 context 超過），該題答案為空，不影響其他題 |
 
-## 怎麼跑（尚未執行過；需要依序）
+## 怎麼跑
 
 ```
 bash scripts/start_llama_servers.sh start                        # 啟動 embedding（8801）與生成（8802），等到兩個就緒
-python3 src/vector/build_index.py                                 # 重建向量索引（語料庫 3649 篇，現有索引是舊的 3640 篇）
-python3 -m pytest tests -q                                        # 單元測試（test_agent.py 不需要服務；test_graph_tools.py 需要 Neo4j）
-python3 src/agent/run_agent.py --mode all --sample-per-type 2     # 小規模試跑：每個題型前 2 題（14 題），存到 *_smoke_predictions.jsonl
-python3 src/agent/run_agent.py --mode all                         # 全部 106 題（C 組）
-python3 src/agent/run_agent.py --mode graph                       # 只用圖（B 組）
+python3 src/vector/build_index.py                                 # 重建向量索引（語料庫 3649 篇）
+python3 -m pytest tests -q                                        # 單元測試
+bash scripts/run_agent_paced.sh graph 10 300                      # B 組，分批、溫度監控
+bash scripts/run_agent_paced.sh all   10 300                      # C 組
+python3 src/agent/run_vector_baseline.py --backend anthropic      # A 組（Haiku，本地只需 embedding，發熱量小）
 ```
 
 `run_agent.py` 結束時會印：題數、伺服器錯誤數、沒呼叫任何工具就回答的題數、工具呼叫出錯次數、被強制回答的題數、各工具的使用次數、各題型第一個呼叫的工具。
 
-## 還沒驗證的事（實跑時要看）
+## 已驗證的結果（2026-09-30，106 題 × 3 組，AI 判定、非人工）
 
-計畫書把這列為 S5 的風險：**4B 模型的工具呼叫穩定度**，不穩的話退路是換 `Qwen3.5-9B`（與 bge 同放 8GB VRAM 很緊，要先把問題向量算好、關掉 bge 再跑）。具體要看：
+**計畫書列的最大風險——4B 模型工具呼叫穩不穩——基本上不成立。** 106 題 × 2 個 agent 模式全程 0 個伺服器錯誤、0 題完全不呼叫工具、0 個空答案；`llama.cpp`（commit `a97cce8`，`--jinja`）能正確解析 Qwen3.5-4B 的工具呼叫，甚至會在一輪裡同時發兩個並行呼叫（例如比較題一次查兩個實體）。`Qwen3.5-9B` 的退路沒有用上。
 
-1. **llama.cpp 能不能正確解析 Qwen3.5 的工具呼叫**：需要 `--jinja`（腳本有帶）；我不確定這個版本（commit `a97cce8`）的模板對 `tools` 與 `tool_choice` 的支援，沒有實測。
-2. **模型會不會呼叫工具**：小模型可能不呼叫就直接回答（紀錄裡是 `沒呼叫任何工具就回答`），或參數亂填、重複呼叫同一個工具。
-3. **選對工具的比例**：例如「某地點有哪些 boss」是不是用 `get_neighbors(relation=LOCATED_AT, direction=in, target_label=Boss)`，方向與參數常是小模型會弄錯的地方。
-4. **context 夠不夠**：生成端從 S2 的 4096 改成 8192（`GEN_CTX` 可調）；system prompt、五個工具的 schema、幾次工具結果加起來會佔多少，我只估過沒量過。超過時該題會記成伺服器錯誤。
-5. **`value` 欄位的 schema 我沒有寫型別**（怕型別陣列在 llama.cpp 轉成文法時出問題），實際是否影響工具呼叫的格式要看。
-6. **提示對結果的影響**：`--no-hint` 對照能看出實體提示貢獻多少。
-7. **延遲**：每題多輪呼叫，S2 單題約 1.5 秒；agent 會多好幾倍，S6 若要報延遲要另外量。
+**分數**（`correct`=1、`partial`=0.5、`wrong`=0；判定為 AI 逐題對照標準答案，非人工，方法論見 `docs/eval-methodology.md`）：
+
+| 題型 | 題數 | A 純向量 | B 純圖 | C 向量+圖 |
+|---|---|---|---|---|
+| single_fact | 22 | 1.000 | 0.955 | 0.955 |
+| numeric | 22 | 0.955 | 1.000 | 1.000 |
+| relational | 22 | 1.000 | 1.000 | 1.000 |
+| multi_hop | 18 | 0.833 | 1.000 | 1.000 |
+| comparison | 10 | 0.900 | 1.000 | 0.900 |
+| false_premise | 6 | 0.833 | 0.167 | 0.333 |
+| unanswerable | 6 | 1.000 | 1.000 | 1.000 |
+| **整體** | 106 | 0.943 | 0.943 | 0.943 |
+
+三組整體正確率巧合地完全相同（都是 100/106），但分題型看故事不同：
+
+- **multi_hop 圖明顯贏**：A 組在 q09、q76、q77、q89 這類需要跨檔案關聯的題上撈不到文件（向量檢索的固有弱點），B／C 用 `get_neighbors`／`get_entity` 直接按關係查，全對。
+- **false_premise 圖明顯輸**：A 組 0.833 vs B 0.167／C 0.333，而且 A 組這個題型的 retrieval recall@5 只有 0.583（比 B／C 的 0.75 還低）卻答得比較對。原因：向量檢索撈不到確認矛盾的文件時，模型傾向老實拒答，剛好貼近「這題本來就有問題」；圖工具反而查到了正確的關係資料（例如 q101 明明查到 Divine Beast Dancing Lion 實際在 Ancient Ruins of Rauh），卻只顧著回答查到的東西，沒有回頭比對題目宣稱的前提。**檢索能力強不代表推理能力強，這個題型把兩者的落差暴露出來了。**
+
+**其他發現**：
+- **`fields=['properties']` 參數誤用**（q86）：`properties` 不是真正的屬性名稱，只是包裝鍵；模型誤以為指定 `fields=['properties']` 能拿到完整屬性，結果每次都查到空值。兩個模式都在 q86 踩到，C 組因此答錯（沒找到 Godrick 紀念品的符文值），B 組運氣好在更早的呼叫已經拿到數字。
+- **同名多重身分題會繞路**（q08、q100、q98）：Ensha、Ranni 這類同時是 NPC 又（可能）是 Boss 的名字，模型會嘗試多種 `label` 組合甚至虛構名稱變體（例如 "Ranni, the Witch of the Deep"），撞到 `tool_error` 才修正，但最終結論通常還是對的，只是多花 2-4 次呼叫。
+- **q14 資料誤讀**：`damage_type` 欄位是 `Slash`，模型從 `description` 風味文字的「deals fire damage」誤判成傷害類型，兩個模式都錯。這是模型讀錯欄位，不是圖或檢索的問題。
+- **延遲**：B 組中位數 1.97 秒／最長 12.64 秒；C 組中位數 2.25 秒／最長 13.32 秒（都含多輪工具呼叫）。A 組（S2 單次檢索＋生成）中位數約 1 秒量級，agent 因為多輪呼叫明顯更慢。
 
 ## 還沒做
 
-- 任何真實執行、判分與分析（S6 的內容）。
-- 依試跑結果調整 prompt、工具描述、壓縮方式。
-- `Qwen3.5-9B` 的退路只是計畫，沒有準備。
-- 向量基準線（A 組）在 S6 前要用重建後的索引重跑；現有的 A 組結果是舊索引、舊資料。
+- **`fields=['properties']` 誤用、false premise 弱、同名實體繞路**——這三個行為毛病要不要修（改工具描述／system prompt），還是就當作 S6 的失敗案例記錄，待決定。
+- **`--no-hint` 對照沒跑過**：還不知道實體連結提示（C 組比 A 組多的那個東西）本身貢獻了多少，這關係到「這是圖帶來的效果還是提示帶來的效果」的歸因問題。
+- 依這輪發現調整 prompt／工具描述、重跑，看分數會不會變。
+- commit、打 `s5` tag。

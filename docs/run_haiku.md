@@ -48,6 +48,21 @@ recall@5 是檢索端的數字：檢索與其他輪完全一致（106 題 top-5 
 
 分數以外的判定結果：5 題 wrong、4 題 partial，其餘 97 題 correct。
 
+**2026-09-30 更新（重建索引後重跑，作為 S6 的 A 組基準線）**：語料庫因 S3／S4 的資料修正重建為 3649 篇（原 3640 篇），用同一支 `run_vector_baseline.py --backend anthropic` 重跑一次。106 題中 25 題的答案文字有變動，多數只是措辭差異；q60 在新索引下兩隻 boss 都撈到了，correct。重新逐題複核後：
+
+| 題型 | 題數 | 答案正確率 | 檢索 recall@5 |
+|---|---|---|---|
+| single_fact | 22 | 1.000 | 1.000 |
+| relational | 22 | 1.000 | 1.000 |
+| numeric | 22 | 0.955（21/22）| 0.955 |
+| comparison | 10 | 0.900（9/10）| 0.950 |
+| multi_hop | 18 | 0.833（15/18）| 0.815 |
+| false_premise | 6 | 0.833（5/6）| 0.583 |
+| unanswerable | 6 | 1.000 | — |
+| **全部** | 106 | **0.943**（100/106，5 wrong、2 partial）| |
+
+輸出在 `eval/results/vector_baseline_anthropic_predictions.jsonl`／`_grading.jsonl`／`_scores.json`（已覆蓋舊檔；舊檔備份在本機 `/tmp/tarnished-rag-llama/`，不在 repo 裡）。這份新結果是 S6 對照 B（純圖）／C（向量＋圖）用的 A 組基準線，完整三組比較與逐題發現見 `docs/agent.md`「已驗證的結果」。
+
 | 題 | 題型 | 判定 | 原因 |
 |---|---|---|---|
 | q09 | multi_hop | wrong | 答「資料沒有」，沒撈到 Rykard 的文件，無法比較 HP |
