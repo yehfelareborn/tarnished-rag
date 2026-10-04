@@ -55,7 +55,10 @@ TOOL_SPECS = {
         "several entities (for example a Boss and an NPC) all are returned; use 'label' to pick one.",
         {"name": {"type": "string", "description": "Entity name, e.g. 'Rykard, Lord of Blasphemy' or a short form like 'Rykard'."},
          "label": {"type": "string", "enum": LABELS, "description": "Only entities with this label."},
-         "fields": {"type": "array", "items": {"type": "string"}, "description": "Only return these properties, e.g. ['hp']."}},
+         "fields": {"type": "array", "items": {"type": "string"},
+                    "description": "Only return these specific property names, e.g. ['hp', 'weight']. Omit this to get "
+                                    "everything. Do not pass 'properties' here - that is just the wrapper key the result "
+                                    "comes back under, not a property name."}},
         ["name"]),
     "get_neighbors": _fn(
         "get_neighbors",
@@ -102,7 +105,7 @@ Rules:
 2. Name the entities your answer is based on. Quote numbers exactly as returned.
 3. For "which / what ..." questions that ask for a list, give every item found, not only the first.
 4. If the tools do not contain the information needed, reply with exactly: {refusal}
-5. If the question assumes something the data contradicts, say so instead of answering the false premise.
+5. Before your final answer, explicitly check every specific claim in the question (a name, a place, a category, a relationship) against what the tools actually returned. If any claim is contradicted by the data, say so plainly instead of answering as if it were true.
 6. Be concise: one or two sentences."""
 
 GRAPH_GUIDE = """- Graph tools give exact facts.
@@ -111,6 +114,9 @@ GRAPH_GUIDE = """- Graph tools give exact facts.
   * filter_by_attribute finds entities by property values, optionally sorted (highest HP, lightest weapon).
   * find_path shows how two entities are connected.
   * Some items merge several states of the same item; the other states are in 'merged_variants'.
+  * The same character sometimes exists under two different names: a longer descriptive name as an NPC, and a shorter
+    base name (no title) as a Boss, or vice versa. Before concluding a character cannot be fought as a boss (or does
+    not exist), also try get_entity with just the short/base form of the name.
 """
 VECTOR_GUIDE = """- vector_search is a free-text search over descriptions. Use it when you do not know the exact entity name or the question is about descriptive text.
 """
@@ -309,6 +315,70 @@ def chat_local(gen_url=GEN_URL, max_tokens=512, timeout=300):
         return data["choices"][0]["message"], {"llm_s": round(time.time() - t, 3),
                                               "prompt_tokens": timings.get("prompt_n"),
                                               "predicted_tokens": timings.get("predicted_n")}
+    return chat
+
+
+CLOUD_MODEL = "claude-haiku-4-5-20251001"
+
+
+def chat_anthropic(model=CLOUD_MODEL, max_tokens=512):
+    """跟 chat_local 同一個介面：chat(messages, tool_specs) -> (assistant message dict, 統計)。
+    Agent 本身用 OpenAI 的訊息／tool_calls 格式，這裡轉成 Anthropic 的格式呼叫，回來再轉回去，
+    Agent.run() 不用知道差異、不用改。API key 從專案根目錄的 .env（ANTHROPIC_API_KEY）讀。"""
+    from dotenv import load_dotenv
+    import anthropic
+    load_dotenv(ROOT / ".env")
+    client = anthropic.Anthropic()
+
+    def to_tools(tool_specs):
+        return [{"name": t["function"]["name"], "description": t["function"]["description"],
+                 "input_schema": t["function"]["parameters"]} for t in (tool_specs or [])]
+
+    def to_anthropic_messages(messages):
+        """OpenAI 格式一輪可能是：assistant(含多個 tool_calls) 接著數個 role=tool 訊息（一個呼叫一則）。
+        Anthropic 要求同一輪的 tool_result 合併成一個 user 訊息的多個 block，這裡用 pending 累積、
+        遇到下一個非 tool 訊息（或結尾）才整批 flush。"""
+        system, out, pending = "", [], []
+        def flush():
+            if pending:
+                out.append({"role": "user", "content": list(pending)})
+                pending.clear()
+        for m in messages:
+            role = m["role"]
+            if role == "system":
+                system = m["content"]
+            elif role == "tool":
+                pending.append({"type": "tool_result", "tool_use_id": m.get("tool_call_id", ""), "content": m["content"]})
+            else:
+                flush()
+                if role == "user":
+                    out.append({"role": "user", "content": m["content"]})
+                elif role == "assistant":
+                    content = [{"type": "text", "text": m["content"]}] if m.get("content") else []
+                    for c in (m.get("tool_calls") or []):
+                        raw = c["function"].get("arguments", "{}")
+                        try:
+                            args = json.loads(raw) if isinstance(raw, str) else (raw or {})
+                        except (ValueError, TypeError):
+                            args = {}
+                        content.append({"type": "tool_use", "id": c.get("id", ""), "name": c["function"]["name"], "input": args})
+                    out.append({"role": "assistant", "content": content})
+        flush()
+        return system, out
+
+    def chat(messages, tool_specs):
+        system, amsgs = to_anthropic_messages(messages)
+        kwargs = {"model": model, "max_tokens": max_tokens, "temperature": 0, "system": system, "messages": amsgs}
+        if tool_specs:
+            kwargs["tools"] = to_tools(tool_specs)
+        t = time.time()
+        resp = client.messages.create(**kwargs)
+        text = "".join(b.text for b in resp.content if b.type == "text")
+        tool_calls = [{"id": b.id, "function": {"name": b.name, "arguments": json.dumps(b.input, ensure_ascii=False)}}
+                      for b in resp.content if b.type == "tool_use"]
+        msg = {"content": text, "tool_calls": tool_calls or None}
+        return msg, {"llm_s": round(time.time() - t, 3), "prompt_tokens": resp.usage.input_tokens,
+                     "predicted_tokens": resp.usage.output_tokens}
     return chat
 
 

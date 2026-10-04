@@ -187,6 +187,10 @@ class GraphTools:
         rows = self._run("MATCH (n:Entity) WHERE n.uid IN $uids RETURN n.uid AS uid, properties(n) AS p",
                          uids=[m["uid"] for m in matches])
         props = {r["uid"]: r["p"] for r in rows}
+        # "properties"／"property" 不是真正的屬性名稱，只是回傳結構裡包著屬性的那個鍵；模型常誤把它當成
+        # fields 的值想取得完整屬性，這樣篩不到任何真正的欄位、每次都查到空值。當成「要全部」處理，不讓它靜默落空。
+        if fields:
+            fields = [f for f in fields if f not in ("properties", "property")]
         want = set(fields) if fields else None
         out = []
         for m in matches[:5]:

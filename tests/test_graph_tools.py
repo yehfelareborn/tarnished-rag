@@ -143,6 +143,12 @@ def test_get_entity_fields_filter(t):
     assert m["properties"] == {"hp": 89613} and "boss_stats" not in m
 
 
+def test_get_entity_fields_properties_literal_falls_back_to_all(t):
+    """fields=['properties'] 是常見的模型誤用（把包裝鍵當成屬性名稱），不該靜默回傳空字典。"""
+    m = t.get_entity("Rykard, Lord of Blasphemy", label="Boss", fields=["properties"])["matches"][0]
+    assert m["properties"] and "hp" in m["properties"]
+
+
 def test_get_entity_ambiguous_returns_all_with_note(t):
     r = t.get_entity("Rykard")
     assert {m["label"] for m in r["matches"]} == {"Boss", "NPC"} and "note" in r
