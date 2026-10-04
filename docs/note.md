@@ -204,6 +204,6 @@ S4 的查詢工具回傳 `Remembrance of theBlasphemous` 時發現 `remembrances
 - NPC／Boss 沒有 SAME_AS（Ensha、q08 因此失敗）。
 - 同一對節點之間有兩條同類型的邊（例如 Malenia → Remembrance of the Rot Goddess 兩條 `DROPS`）。
 - 「地點標題黏在掉落物後面而被當雜訊丟掉」在其他 boss 列有沒有，還沒掃。
-- ~~A2 的 53 條~~：已逐條分類、處理、能修的都修完（2026-10-02，詳見 `docs/graph-schema.md`）。15 條使用者確認是真正錯誤，已從資料層移除；另一個爬蟲 bug（Crucible Knights／Night's Cavalry 地點標題遺失）也修了，救回 15 個地點、2 條因此對上。剩 36 條都不是真衝突（15 條真正的資料缺漏，含 Mad Pumpkin Head／Black Knife Assassin 這兩隻確認無資料可救；~21 條大區/子地點階層）。語料庫是否去重（43 組同名 Item，只有圖層合併了，corpus.jsonl 還沒）。`locations.csv` 另有 3 組同名不同列的地點（Divine Tower of Caelid 等），待合併。
+- ~~A2 的 53 條~~：已逐條分類、處理、能修的都修完（2026-10-02～10-04，詳見 `docs/graph-schema.md`）。15 條使用者確認是真正錯誤，已從資料層移除；另一個爬蟲 bug（Crucible Knights／Night's Cavalry 地點標題遺失）也修了，救回 15 個地點、2 條因此對上；~~3 組同名 Location 重複~~（Divine Tower of Caelid 等）也合併了，解掉 Godskin Apostle 的假訊號。剩 35 條都不是真衝突（15 條真正的資料缺漏，含 Mad Pumpkin Head／Black Knife Assassin 這兩隻確認無資料可救；~21 條大區/子地點階層）。語料庫是否去重（43 組同名 Item，只有圖層合併了，corpus.jsonl 還沒）。
 - ~~232 個 stub 保留與否~~：已決定保留（2026-10-01）。
 - ~~向量索引與兩個基準線是舊資料~~：已重建索引（3649 篇）並重跑兩個基準線（2026-09-30），見 `docs/run_haiku.md`。

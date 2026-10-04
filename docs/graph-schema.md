@@ -4,14 +4,14 @@
 
 原則：只用結構化欄位建圖，不用 LLM 抽取；每個節點與邊都帶 `source_file`（邊多帶來源欄位資訊）；所有節點帶 `dlc`（0／1）。所有節點另掛一個共用標籤 `Entity`，有唯一 `uid` 與 `name` 索引。
 
-## 節點（共 3863 個，其中 235 個是 stub）
+## 節點（共 3860 個，其中 235 個是 stub）
 
 | 標籤 | 節點數 | 其中 stub | 來源 | 主要屬性 |
 |---|---|---|---|---|
 | `Item` | 921 | 131 | items/*.csv 的 13 個子類（同名的已合併，見下）| `item_type`（子類名）、effect、description、usage 等該子類有的欄位；合併過的另有 `merged_from`、`item_types`、`merged_variants` |
 | `Armor` | 723 | 0 | armors.csv | slot、weight、damage_negation、resistance、special_effect、how_to_acquire |
 | `Weapon` | 403 | 1 | weapons.csv | category、damage_type、weight、passive_effect、skill、`str/dex/int/fai/arc`（由 `requirements` 拆開）|
-| `Location` | 300 | 14 | locations.csv | description |
+| `Location` | 297 | 14 | locations.csv | description |
 | `Skill` | 261 | 4 | skills.csv | skill_type、equipment、charge、fp、effect |
 | `Creature` | 259 | 54 | creatures.csv | blockquote |
 | `Spell` | 214 | 1 | sorceries.csv、incantations.csv | school、effect、fp、slot、`int/fai/arc`、location_text |
@@ -35,8 +35,13 @@
   - **同一物品的不同狀態**（原本先排除、待使用者判斷，2026-09-29 使用者確認後也合併了）：`Lord of Blood's Favor`（keyItems 45／46，浸血前的白布與浸血後染紅的布）、`Unalloyed Gold Needle`（keyItems 40／41／42，斷掉 → 修復 → Millicent 身上取出的針）。原始資料每個狀態一列，名稱、圖片、`description` 都相同（`description` 本身就把各狀態都寫進去），只有 `usage`／`location` 不同。使用者確認它們是同一個物品在任務中的不同狀態，所以併成一個節點。**限制**：保留節點的 `usage`／`location` 只反映保留者那個狀態（Lord of Blood's Favor 是浸血前、Unalloyed Gold Needle 是 Millicent 那個），其他狀態的取得方式在 `merged_variants` 這個 JSON 字串裡，要讀那個屬性才看得到。`MERGE_EXCLUDE` 集合保留下來但目前是空的，之後若有真的不同的同名物品可以排除。
   - **已查**：題庫的 `source` 沒有指到被併掉的那一列；合併後 Rot Goddess 是單一節點，同時有 `DROPS` 與 `EXCHANGES_FOR`。
   - **一開始的數字要更正**：最早用小寫名稱比對只找到 36 組、73 個節點，漏掉名稱只差空格或引號的 2 組，以及 5 個黏字紀念品（`theBlasphemous` 與 `the Blasphemous` 不同）。用建圖的正規化名稱比才是 43 組、87 個節點。
+- **同名 Location 合併**（`build_graph.merge_duplicate_locations`，S4 加的；使用者 2026-10-04 決定）：共 **3 組全部合併、3 個重複節點併入**（`Divine Tower of Caelid`、`Bridge of Sacrifice`、`Grand Lift of Dectus` 各 2 份）。跟 Item 不一樣，這不是「各記一部分」的真衝突——items/npcs/creatures/bosses/description 逐字相同，只有 `region` 不同，原因是這些地點本來就橫跨兩個區域（例如 Bridge of Sacrifice 橫跨 Limgrave／Weeping Peninsula），來源網站把同一個地點頁面歸進兩個區域頁各建一列。
+  - **做法**：`region` 不是節點屬性，只在 `build_edges()` 用來建 `LOCATED_IN` 邊，所以不用像 Item 那樣記 `merged_variants`——留 id 較小的節點，被併掉的 uid 記進全域的 `MERGED` 重新導向表；`build_edges()` 原本用 `f"Location:locations:{id}"` 直接拼 uid 的三處（`LOCATED_IN` 建邊、`loc_lists`、locations.csv 的 bosses/npcs/creatures/items 清單）都改成透過 `MERGED` 重新導向，讓保留的節點對兩個 `Region` 都建 `LOCATED_IN` 邊；bosses/npcs/creatures/items 清單那一段改成整列跳過（被併掉那一列的內容跟保留的逐字相同，重複處理會把邊建兩次）。
+  - **驗證**：合併前 `description` 不同就直接報錯（這 3 組都通過，確認真的是純跨區域重複，不是巧合同名）；Bridge of Sacrifice／Divine Tower of Caelid 原本各有 12 個不同的 incoming LOCATED_AT（兩份各 12，合併後仍是 12，不是 24，代表沒有重複建邊）。節點 3863 → 3860，`LOCATED_AT` 4332 → 4306（少 26 條重複邊），`LOCATED_IN` 不變（286，被併掉的 3 個節點各少 1 條，保留的 3 個節點各多 1 條，對消）。
+  - **跟 Godskin Apostle 的關聯**：這組合併解決了上次查 A2 時發現的假訊號——`bosses.csv` 對到 Divine Tower of Caelid 其中一份、`locations.csv` 對到另一份，兩條邊都存在造成 Godskin Apostle 誤判進 A2；合併後它不再出現在 A2（A2 由 36 降為 35）。
+  - 每個被併掉的節點一列寫到 `data/processed/graph_location_merges.csv`。
 
-## 邊（共 6618 條）
+## 邊（共 6592 條）
 
 | 關係 | 條數 | 方向 | 來源欄位 | 邊上的屬性 |
 |---|---|---|---|---|
@@ -70,10 +75,11 @@
 
 稽核用的輸出：
 - `data/processed/graph_fuzzy_matches.csv`：所有靠清理／別名／去空白／錯字容忍成功的比對（145 次）
-- `data/processed/graph_stubs.csv`：所有 stub（233 筆）
-- `data/processed/graph_unmatched.csv`：未命中與欄位污染記錄（44 筆：`column_contaminated` 38、`boss_is_creature_here` 5、`boss_location` 1；另有 `boss_location_leftover`＝地點欄掃描後的殘留字串，目前 0 筆）
-- `data/processed/alignment_changes.csv`：資料層 Boss↔地點對齊的每一筆變更（46 筆：B4 20、使用者確認清單 7、A1 新增 10、A1 跳過 9，見下）
+- `data/processed/graph_stubs.csv`：所有 stub（235 筆，數字會隨資料修正變動，見「節點」章節的 stub 小計）
+- `data/processed/graph_unmatched.csv`：未命中與欄位污染記錄（`column_contaminated` 38、`boss_is_creature_here` 5、`boss_location` 1、`boss_location_leftover` 1）
+- `data/processed/alignment_changes.csv`：資料層 Boss↔地點對齊的每一筆變更（B4、使用者確認清單、A1 新增、A1 跳過，見下）
 - `data/processed/graph_item_merges.csv`：同名 Item 合併的每個被併掉的節點（44 列）：保留的 uid、被併掉的 uid、兩邊的名稱、衝突欄位的兩份值（JSON）
+- `data/processed/graph_location_merges.csv`：同名 Location 合併的每個被併掉的節點（3 列）：保留的 uid、被併掉的 uid、名稱
 
 ## 建圖過程發現的資料問題
 
@@ -101,7 +107,7 @@
   | 類型 | 條數 | 意思 | 處理 | 例子 |
   |---|---|---|---|---|
   | 兩邊都有 | 190 | | | 對齊前是 143；對齊、Perfumer Tricia／Misbegotten Warrior 補列共貢獻 37 條；2026-10-02 修 Crucible Knights／Night's Cavalry 的地點標題遺失 bug 後又多 6 條（Stormhill Evergaol、Forbidden Lands 等）。143 + 37 + 6 = 186，與 190 差 4 條，原因同舊版：2 條可解釋（Jagged Peak Drake、Perfumer Tricia 本身），另外 2 條沒有逐條追查 |
-  | A2 | 36 | 只在 locations 清單；`bosses.csv` 有這隻 boss，但它的地點文字沒寫這個地點 | 原 53 條，**已逐條檢視完分類、15 條使用者確認錯誤已移除**，另修好一個爬蟲 bug 救回 2 條（見下）；剩 36 條，**全部是真正的資料缺漏或大區/子地點階層，沒有待判斷項** |
+  | A2 | 35 | 只在 locations 清單；`bosses.csv` 有這隻 boss，但它的地點文字沒寫這個地點 | 原 53 條，**已逐條檢視完分類、15 條使用者確認錯誤已移除**，另修好一個爬蟲 bug 救回 2 條、合併同名 Location 解掉 Godskin Apostle 的假訊號再少 1 條（見下）；剩 35 條，**全部是真正的資料缺漏或大區/子地點階層，沒有待判斷項** |
   | 地點是 stub | 19 | 只在 bosses.csv；那個地點在 locations.csv 根本不存在（見下方 Location stub），所以必然單邊 | 不算真的不一致 | Ancient Ruins of Rauh ← Divine Beast Dancing Lion |
   | A1 剩餘 | 8 | 只在 locations 清單；`bosses.csv` 沒有這隻 boss 的列（建了 Boss stub）| 見下，**故意不補列** | Church of the Crusade ← Fire Knight Queelign |
   | B3 | 0 | 原本 5 條：只在 bosses.csv，地點是從黏在一起的多地點字串（或錯字容忍）推得 | 使用者逐條確認正確，已對齊（見下）| |
@@ -132,7 +138,7 @@
 
   A2 現在剩的 38 條（①②③類）都不是真正的衝突，**第④類「使用者判斷」的部分已經清空**。剩下待決定的只有①的爬蟲 bug 要不要修（見上）。
 
-  **同時發現、尚未處理**：`locations.csv` 有 3 組同名不同列的地點（`Divine Tower of Caelid`、`Bridge of Sacrifice`、`Grand Lift of Dectus` 各 2 份），跟 Item 同名問題是同一類型，之前查 Godskin Apostle 誤判進 A2 就是因為中了這個（其中一份對不上 `bosses.csv`、另一份對得上，兩條邊都存在造成假訊號）。待決定是否比照 `merge_duplicate_items` 的做法合併
+  **同名 Location 重複（已合併，2026-10-04）**：`locations.csv` 原本有 3 組同名不同列的地點（`Divine Tower of Caelid`、`Bridge of Sacrifice`、`Grand Lift of Dectus` 各 2 份，橫跨兩個區域各被收錄一次），比照 `merge_duplicate_items` 的做法合併成單一節點，`region` 改成讓保留的節點對兩個 `Region` 都有 `LOCATED_IN` 邊。詳見「節點」章節的「同名 Location 合併」。
 
   **已套用的決定**（A1、B4、B3、B1、B2 是使用者的裁決；A1 的兩條例外規則是我延伸的，見下，使用者尚未逐一確認）：
   - **A1、B4：讓兩邊對齊**（資料層，`clean_raw.py`，`data/raw` 不動）。B4：`bosses.csv` 的地點 key 精確對上某個地點、但該地點的 `bosses` 清單沒列這隻 → 補進清單，共 **20 條**（例如 Magma Wyrm → Dragon's Pit、Ulcerated Tree Spirit → Belurat Tower Settlement／Leyndell 兩處）。A1：`locations.csv` 的 `bosses` 清單列了、但 `bosses.csv` 沒這隻 → 在 `bosses.csv` 補一列（`bosses.csv` 裡這一列只有名稱與地點；dlc 沿用地點的 dlc），共補 **9 列、10 條地點關係**（Swordhand of Night Anna／Jolan、Elden Beast、Elder Dragon Greyoll、Walking Mausoleum、Putrid Crystalians、Stray Mimic Tear、Lion Misbegotten Warrior、Nox Swordstress & Nox Priest）。A1 對齊後 A1 由 19 條降為 8 條
@@ -183,7 +189,7 @@
 ## 待決定
 
 1. ~~**stub 節點去留**~~：**已決定保留**（2026-10-01，使用者確認）。235 個 stub 沒有屬性，只有名稱與來源；好處是讓題庫的標準答案（取自 locations.csv 清單）在圖裡有對應節點，代價是稀釋了「資料實際知道的實體」。不用改程式，`filter_by_attribute` 已經預設排除 stub（`include_stubs=True` 才含），`get_entity`／`get_neighbors` 一律照常回傳並標記 `stub`。按標籤分布：Item 131、Creature 54、NPC 17、Boss 13、Location 14、Skill 4、Spell 1、Weapon 1，清單在 `data/processed/graph_stubs.csv`
-2. ~~**Boss↔地點剩下的不一致**~~：A1、B4、B3、B1、B2 已依使用者裁決處理（見上）。**A2 原 53 條，已逐條分類、處理、能修的都修完（2026-10-02）**：15 條使用者確認是真正的錯誤，已移除；另一個爬蟲 bug（地點標題遺失）救回 Crucible Knights／Night's Cavalry 共 15 個地點、2 條因此對上變成「兩邊都有」；剩 36 條都是真正的資料缺漏（15 條，含 Mad Pumpkin Head／Black Knife Assassin 這兩隻真的沒有地點資料）或大區/子地點階層關係（約 21 條），不算衝突，**沒有待判斷項了**。S4 的查詢工具是否要提供依 `sources` 篩選（例如只信兩邊都有的）待決定
+2. ~~**Boss↔地點剩下的不一致**~~：A1、B4、B3、B1、B2 已依使用者裁決處理（見上）。**A2 原 53 條，已逐條分類、處理、能修的都修完（2026-10-02～10-04）**：15 條使用者確認是真正的錯誤，已移除；另一個爬蟲 bug（地點標題遺失）救回 Crucible Knights／Night's Cavalry 共 15 個地點、2 條因此對上變成「兩邊都有」；合併同名 Location 又解掉 Godskin Apostle 的假訊號；剩 35 條都是真正的資料缺漏（15 條，含 Mad Pumpkin Head／Black Knife Assassin 這兩隻真的沒有地點資料）或大區/子地點階層關係（約 21 條），不算衝突，**沒有待判斷項了**。S4 的查詢工具是否要提供依 `sources` 篩選（例如只信兩邊都有的）待決定
 3. **向量索引與基準線與現在的資料不同步**：資料對齊後語料庫已重建為 3649 篇（原 3640 篇，A1 新增 9 篇 boss 文件，且 17 個地點的 boss 清單因 B4 而變了），但 `data/processed/vector_index/` 是用舊語料建的，兩個向量基準線（Qwen3.5-4B、Claude Haiku 4.5）的結果也是用舊索引跑的（q60 的判分已依新標準答案重判，其他題沒動）。要在 S6 公平比較圖檢索與向量檢索，需要重啟 bge 服務、重建索引，並決定是否重跑兩個基準線
 4. `Rellana's Twinblade`（remembrances.csv）與 `Rellana's Twin Blades`（weapons.csv）拼法不同，目前是一個 Weapon stub 加一個真實節點，尚未處理
 5. 177 個 `Boss` 中只有 105 個的 `hp` 能 parse 成單一數字（含空值、多階段、約略值加註記等格式的保留在 `hp_raw`）；148 個有掛上 boss_stats 的數值

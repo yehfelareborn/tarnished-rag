@@ -232,6 +232,9 @@ MERGE_LOG = []              # 稽核：每個被併掉的節點一列
 ITEM_MERGE_CSV = ROOT / "data" / "processed" / "graph_item_merges.csv"
 MERGE_SKIP_KEYS = {"uid", "row_id", "source_file", "name", "item_type", "dlc", "stub"}
 
+LOCATION_MERGE_LOG = []      # 稽核：每個被併掉的 Location 節點一列
+LOCATION_MERGE_CSV = ROOT / "data" / "processed" / "graph_location_merges.csv"
+
 
 def merge_duplicate_items():
     """把同名（norm 後相同）的 Item 節點合成一個，在建邊之前做，後面所有名稱比對就只會找到保留的那個。
@@ -288,6 +291,42 @@ def merge_duplicate_items():
         nospace_index[key.replace(" ", "")] = [(l, u) for l, u in nospace_index[key.replace(" ", "")] if u not in gone]
         label_index["Item"][key] = [u for u in label_index["Item"][key] if u not in gone]
         stats["items_merged"] += len(rest)
+
+
+def merge_duplicate_locations():
+    """同名 Location 合成一個節點，在建邊之前做（使用者 2026-10-04 確認）。
+
+    跟 Item 不一樣：這不是「不同檔案各記一部分」的真衝突，是地點橫跨兩個區域、被來源網站的
+    兩個區域頁各收錄一次造成的純複製——items/npcs/creatures/bosses/description 逐字相同，
+    只有 region 不同（例：Bridge of Sacrifice 橫跨 Limgrave／Weeping Peninsula）。
+    `region` 不是節點屬性，只在 build_edges() 用來建 LOCATED_IN 邊，所以不用 merged_variants；
+    留 id 較小的節點，被併掉的 uid 記進 MERGED，build_edges() 建邊時會重新導向到保留的節點，
+    讓它對兩個 Region 都有 LOCATED_IN 邊。若 description 不同就直接報錯，不默默假設是同一種情況。"""
+    groups = defaultdict(list)
+    for p in nodes["Location"]:
+        groups[norm(p["name"])].append(p["uid"])
+    for key, uids in groups.items():
+        if len(uids) < 2:
+            continue
+        uids = sorted(uids, key=lambda u: int(node_props[u]["row_id"]))
+        keep, rest = uids[0], uids[1:]
+        kp = node_props[keep]
+        for u in rest:
+            op = node_props[u]
+            if op["description"].strip() != kp["description"].strip():
+                raise ValueError(f"Location 合併 {key!r}：description 不同，不是單純的跨區域重複，需要人工看"
+                                  f"（{keep} vs {u}）")
+            LOCATION_MERGE_LOG.append({"kept": keep, "merged": u, "name": kp["name"]})
+            MERGED[u] = keep
+        kp["merged_from"] = rest
+        gone = set(rest)
+        nodes["Location"] = [p for p in nodes["Location"] if p["uid"] not in gone]
+        for u in rest:
+            del node_props[u]
+        name_index[key] = [(l, u) for l, u in name_index[key] if u not in gone]
+        nospace_index[key.replace(" ", "")] = [(l, u) for l, u in nospace_index[key.replace(" ", "")] if u not in gone]
+        label_index["Location"][key] = [u for u in label_index["Location"][key] if u not in gone]
+        stats["locations_merged"] += len(rest)
 
 
 NOISE_STR =re.compile(r"^(map link|elden ring map link|npcs?|spirit npc|\?+|to be added|n/a|-+|none|"
@@ -538,20 +577,22 @@ def item_targets(text, src, dlc, allow_stub=True):
 
 
 def build_edges(loc_rows):
-    # Location -LOCATED_IN-> Region
+    # Location -LOCATED_IN-> Region（跨區域的重複地點已在 merge_duplicate_locations() 合併成一個節點，
+    # 這裡用 MERGED 重新導向被併掉的那一列，讓保留的節點對兩個 Region 都建邊）
     for r in loc_rows:
         reg = r["region"].strip()
         if reg:
-            luid = f"Location:locations:{r['id']}"
+            luid = MERGED.get(f"Location:locations:{r['id']}", f"Location:locations:{r['id']}")
             add_edge("LOCATED_IN", luid, f"Region:locations:{reg}", node_props[luid]["source_file"])
 
     # Boss -LOCATED_AT-> Location（含符文數）、Boss -DROPS-> 物品（含 at_location）
     boss_loc = defaultdict(set)   # boss uid -> {location uid}
     rel_sources = defaultdict(set)  # (擁有者 uid, location uid) -> {'bosses.csv', 'locations.csv'}
     bnorm = lambda x: norm(re.sub(r"\s*\(.*\)$", "", x or ""))
-    loc_lists = {f"Location:locations:{lr['id']}": ({bnorm(x) for x in parse_list(lr["bosses"])},
-                                                    {bnorm(x) for x in parse_list(lr["creatures"])})
-                 for lr in loc_rows}
+    loc_lists = {}
+    for lr in loc_rows:
+        luid = MERGED.get(f"Location:locations:{lr['id']}", f"Location:locations:{lr['id']}")
+        loc_lists[luid] = ({bnorm(x) for x in parse_list(lr["bosses"])}, {bnorm(x) for x in parse_list(lr["creatures"])})
     rows, src = load("bosses.csv")
     for r in rows:
         buid = f"Boss:bosses:{r['id']}"
@@ -621,6 +662,9 @@ def build_edges(loc_rows):
         item_strings.update(norm(x) for x in parse_list(cr["drops"]))
     for r in rows:
         luid = f"Location:locations:{r['id']}"
+        if luid in MERGED:
+            continue   # 這一列被併進另一個同名地點（跨區域重複，見 merge_duplicate_locations），
+                       # bosses/npcs/creatures/items 跟保留的那一列逐字相同，保留的那一列會處理一次，這裡不重複建邊
         ldlc = node_props[luid]["dlc"]
         for b in parse_list(r["bosses"]):
             if is_noise(b):
@@ -774,6 +818,7 @@ def main():
     load_dotenv(ROOT / ".env")
     loc_rows = build_nodes()
     merge_duplicate_items()
+    merge_duplicate_locations()
     build_edges(loc_rows)
     merge_boss_stats()
     attach_aliases()
@@ -802,7 +847,13 @@ def main():
         w.writeheader()
         w.writerows(MERGE_LOG)
 
+    with LOCATION_MERGE_CSV.open("w", encoding="utf-8", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=["kept", "merged", "name"])
+        w.writeheader()
+        w.writerows(LOCATION_MERGE_LOG)
+
     print("同名 Item 合併:", stats["items_merged"], "個節點併入保留的節點（稽核：graph_item_merges.csv）")
+    print("同名 Location 合併:", stats["locations_merged"], "個節點併入保留的節點（稽核：graph_location_merges.csv）")
     print("stub 節點:", dict(Counter(x["label"] for x in stubs)), "合計", len(stubs))
     print("節點:", {k: len(v) for k, v in nodes.items()}, "合計", sum(len(v) for v in nodes.values()))
     print("邊:", {k: len(v) for k, v in edges.items()}, "合計", sum(len(v) for v in edges.values()))
