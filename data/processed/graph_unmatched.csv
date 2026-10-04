@@ -2,6 +2,7 @@ kind,context,text,source_file
 boss_is_creature_here,"Valiant Gargoyle @ Leyndell, Ashen Capital","Leyndell, Ashen Capital:",data/processed/dlc_scrape/bosses.csv
 boss_is_creature_here,"Valiant Gargoyle @ Leyndell, Ashen Capital","Leyndell, Ashen Capital:",data/processed/dlc_scrape/bosses.csv
 boss_location,Stonedigger Troll,,data/processed/dlc_scrape/bosses.csv
+boss_location_leftover,Night's Cavalry @ Greyoll's Dragonbarrow,greyolls,data/processed/dlc_scrape/bosses.csv
 boss_is_creature_here,Lion Guardian @ Castle Sol,"Stormveil Castle Fort Gael (Caelid) Redmane Castle Castle Sol Leyndell, Royal Capital",data/processed/dlc_scrape/bosses.csv
 boss_is_creature_here,Putrid Avatar @ Elphael Brace of the Haligtree,"Elphael, Brace of the Haligtree:",data/processed/dlc_scrape/bosses.csv
 boss_is_creature_here,Putrid Tree Spirit @ Grand Cloister,Grand Cloister,data/processed/dlc_scrape/bosses.csv

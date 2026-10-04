@@ -5,6 +5,10 @@ B4_add_boss_to_location_list,"Margit, the Fell Omen (Stormveil Castle)",Stormvei
 B4_add_boss_to_location_list,Death Rite Bird,Academy Gate Town
 B4_add_boss_to_location_list,Fallingstar Beast,Finger Ruins of Dheo
 B4_add_boss_to_location_list,"Rick, Soldier Of God",Stranded Graveyard
+B4_add_boss_to_location_list,Crucible Knights,Stormveil Castle
+B4_add_boss_to_location_list,Crucible Knights,Siofra River
+B4_add_boss_to_location_list,Crucible Knights,Siofra Aqueduct
+B4_add_boss_to_location_list,Crucible Knights,"Leyndell, Royal Capital"
 B4_add_boss_to_location_list,Erdtree Avatar,Deeproot Depths
 B4_add_boss_to_location_list,Ulcerated Tree Spirit,"Leyndell, Royal Capital"
 B4_add_boss_to_location_list,Ulcerated Tree Spirit,"Leyndell, Ashen Capital"
@@ -26,6 +30,21 @@ CONFIRMED_add_boss_to_location_list,Base Serpent Messmer,Shadow Keep
 CONFIRMED_add_boss_to_location_list,Golem,Stormhill
 CONFIRMED_add_boss_to_location_list,Golem,Castle Morne
 CONFIRMED_add_boss_to_location_list,Golem,Ainsel River Well
+CONFIRMED_remove_boss_from_location_list,Ancestor Spirit,Mistwood
+CONFIRMED_remove_boss_from_location_list,Dragonkin Soldier,Mistwood
+CONFIRMED_remove_boss_from_location_list,Tibia Mariner,Mistwood
+CONFIRMED_remove_boss_from_location_list,Erdtree Avatar,Minor Erdtree (Caelid)
+CONFIRMED_remove_boss_from_location_list,Fire Giant,Forge of the Giants
+CONFIRMED_remove_boss_from_location_list,Golem,Ainsel River
+CONFIRMED_remove_boss_from_location_list,Grafted Scion,Stormveil Castle
+CONFIRMED_remove_boss_from_location_list,"Jori, Elder Inquisitor",Darklight Catacombs
+CONFIRMED_remove_boss_from_location_list,Miranda The Blighted Bloom,Perfumer's Grotto
+CONFIRMED_remove_boss_from_location_list,Omenkiller,Perfumer's Grotto
+CONFIRMED_remove_boss_from_location_list,"Mohg, Lord of Blood",Mohgwyn Dynasty Mausoleum
+CONFIRMED_remove_boss_from_location_list,Sanguine Noble,Second Church of Marika
+CONFIRMED_remove_boss_from_location_list,Starscourge Radahn,Wailing Dunes
+CONFIRMED_remove_boss_from_location_list,Valiant Gargoyle,"Nokron, Eternal City"
+CONFIRMED_remove_boss_from_location_list,Fell Twins,Divine Tower of East Altus
 A1_add_boss_row,Swordhand of Night Anna,Cathedral of Manus Metyr
 A1_add_boss_row,Swordhand of Night Jolan,Cathedral of Manus Metyr
 A1_skipped_same_name_npc_or_creature_exists,Fire Knight Queelign,Church of the Crusade

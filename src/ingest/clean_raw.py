@@ -238,6 +238,32 @@ BOSS_LOCATION_FIXES = {
            {"Unsightly Catacombs": ["9400 Runes", "Perfumer Tricia Ashes"]}),
     "137": ("Misbegotten Warrior", "Redmane Castle :",
             {"Redmane Castle": ["16000 Runes", "Ruins Greatsword"]}),
+
+    # 使用者確認（2026-10-02，A2 檢視時發現）：這兩隻刷怪型 boss 的 Locations & Drops 欄位，地點標題全部
+    # 遺失變成 dict key None，但符文／掉落物還黏在同一個 list 裡沒丟，跟上面 id=97/137 是同一類 bug。
+    # 地點名稱與下一個地點的掉落物黏在一起（例如 "...Tail Stormveil Castle :"），靠已知地點名稱手動切開，
+    # 數字與掉落物字串原樣保留。切出的地點與 locations.csv 現有清單大多對不上（Crucible Knights 原始資料
+    # 完全沒提到 locations.csv 寫的 Auriza Hero's Grave；Night's Cavalry 只有 Forbidden Lands 一處重疊），
+    # 所以不影響 A2 的判斷，純粹補回原本遺失的地點/符文/掉落資料。
+    "75": ("Crucible Knights", "Stormhill Evergaol :", {
+        "Stormhill Evergaol": ["2,100 (NG)", "10,500 (NG+1)", "Aspects of the Crucible: Tail"],
+        "Stormveil Castle": ["1,613", "Aspects of the Crucible: Horns"],
+        "Siofra River": ["3,080"],
+        "Siofra Aqueduct": ["3,080 each", "Sword: Crucible Hornshield", "Spear: Somber Smithing Stone [6]"],
+        "Leyndell, Royal Capital": ["3,840 each"],
+        "Crumbling Farum Azula": ["7,360 each"],
+    }),
+    "81": ("Night's Cavalry", "Limgrave :", {
+        "Limgrave": ["Runes 2,400 (NG)", "Other Drops:", "Ash of War: Repeating Thrust"],
+        "Weeping Peninsula": ["3,400 (NG)", "Other Drops:", "Ash of War: Barricade Shield", "Nightrider Flail"],
+        "Liurnia South": ["5,600 Runes", "Other Drops:", "Ash of War: Ice Spear"],
+        "Liurnia North": ["5,600", "Other Drops:", "Ash of War: Giant Hunt", "Nightrider Glaive"],
+        "Caelid": ["8,500", "Other Drops:", "Ash of War: Poison Moth Flight"],
+        "Altus Plateau": ["10,000", "Other Drops:", "Ash of War: Shared Order"],
+        "Forbidden Lands": ["36,000", "Other Drops:", "Ash of War: Phantom Slash"],
+        "Greyoll's Dragonbarrow": ["42,000", "Other Drops:", "Ash of War: Bloodhound's Step"],
+        "Consecrated Snowfield": ["84,000", "Other Drops:", "Night's Cavalry Set", "Ancient Dragon Smithing Stone"],
+    }),
 }
 
 
@@ -453,6 +479,26 @@ CONFIRMED_BOSS_LOCATIONS = [
     ("Golem", "Ainsel River Well"),                      # 同上，原 B1 略過
 ]
 
+# 使用者（玩過遊戲）逐條確認錯誤的 Boss↔地點（A2 檢視挖出來的）：locations.csv 該地點的 bosses 清單裡有這個
+# 名字，但實際上這隻 boss 不在這個地點，bosses.csv 自己寫的地點也是別處。從該地點的 bosses 清單移除。
+CONFIRMED_WRONG_BOSS_LOCATIONS = [
+    ("Ancestor Spirit", "Mistwood"),      # bosses.csv 寫 Siofra River，使用者確認 Mistwood 不對
+    ("Dragonkin Soldier", "Mistwood"),    # bosses.csv 寫 Siofra River／Lake of Rot
+    ("Tibia Mariner", "Mistwood"),        # bosses.csv 列 5 個地點都不含 Mistwood
+    ("Erdtree Avatar", "Minor Erdtree (Caelid)"),  # bosses.csv 列其他 5 個 Minor Erdtree 變體，不含 Caelid 這個
+    ("Fire Giant", "Forge of the Giants"),         # bosses.csv 寫 Flame Peak；使用者確認 Forge of the Giants 不對
+    ("Golem", "Ainsel River"),                     # bosses.csv 寫 Ainsel River Well（不同地點，Well 已在 CONFIRMED_BOSS_LOCATIONS）
+    ("Grafted Scion", "Stormveil Castle"),         # bosses.csv 寫 Chapel of Anticipation 等 4 處，不含 Stormveil Castle
+    ("Jori, Elder Inquisitor", "Darklight Catacombs"),  # bosses.csv 寫 Abyssal Woods；使用者確認 Darklight Catacombs 不對
+    ("Miranda The Blighted Bloom", "Perfumer's Grotto"),   # bosses.csv 寫 Tombsward Cave
+    ("Omenkiller", "Perfumer's Grotto"),                   # bosses.csv 寫 Village of the Albinaurics
+    ("Mohg, Lord of Blood", "Mohgwyn Dynasty Mausoleum"),  # bosses.csv 寫 Mohgwyn Palace
+    ("Sanguine Noble", "Second Church of Marika"),         # bosses.csv 寫 Writheblood Ruins
+    ("Starscourge Radahn", "Wailing Dunes"),               # bosses.csv 寫 Redmane Castle
+    ("Valiant Gargoyle", "Nokron, Eternal City"),          # bosses.csv 寫 Siofra Aqueduct／Capital Outskirts／Leyndell 兩處
+    ("Fell Twins", "Divine Tower of East Altus"),          # bosses.csv 寫 Capital Outskirts
+]
+
 
 def align_boss_locations() -> None:
     """讓 bosses.csv 與 locations.csv 對 Boss↔地點 的說法對齊（使用者決定的 A1、B4 兩類）。
@@ -504,6 +550,15 @@ def align_boss_locations() -> None:
         L["bosses"] = repr(lst)
         changes.append(("CONFIRMED_add_boss_to_location_list", boss, loc))
 
+    # ---- 使用者確認錯誤清單（A2 檢視）----
+    for boss, loc in CONFIRMED_WRONG_BOSS_LOCATIONS:
+        L = loc_by_name[loc]        # 找不到地點就直接報錯，不默默略過
+        lst = _plist(L["bosses"])
+        if not any(_same(boss, x) for x in lst):
+            continue
+        L["bosses"] = repr([x for x in lst if not _same(boss, x)])
+        changes.append(("CONFIRMED_remove_boss_from_location_list", boss, loc))
+
     # ---- A1 ----
     def _names(path):
         with path.open(encoding="utf-8", newline="") as f:
@@ -546,7 +601,8 @@ def align_boss_locations() -> None:
         w = csv.writer(f); w.writerow(["kind", "boss", "location"]); w.writerows(changes)
     from collections import Counter
     c = Counter(k for k, _, _ in changes)
-    print(f"align_boss_locations: B4 補進地點清單 {c['B4_add_boss_to_location_list']} 筆；使用者確認清單補進 {c['CONFIRMED_add_boss_to_location_list']} 筆；"
+    print(f"align_boss_locations: B4 補進地點清單 {c['B4_add_boss_to_location_list']} 筆；使用者確認清單補進 {c['CONFIRMED_add_boss_to_location_list']} 筆、"
+          f"移除 {c['CONFIRMED_remove_boss_from_location_list']} 筆；"
           f"A1 補 bosses.csv {len(added)} 列（{c['A1_add_boss_row']} 條地點關係）；"
           f"A1 跳過（同名 npc/creature）{c['A1_skipped_same_name_npc_or_creature_exists']}、（合併列的一員）{c['A1_skipped_part_of_existing_boss_row']}")
 
