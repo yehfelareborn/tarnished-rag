@@ -11,11 +11,17 @@
 # 溫度監控用 nvidia-smi（GPU）與 /sys/class/thermal 的 TCPU／x86_pkg_temp（CPU），任一個不存在就跳過那項監控。
 set -euo pipefail
 
-MODE="${1:?用法: run_agent_paced.sh <graph|all> [chunk_size=10] [cycle_seconds=300] [--no-hint 等 run_agent.py 的其他參數...]}"
+MODE="${1:?用法: run_agent_paced.sh <graph|all|vector> [chunk_size=10] [cycle_seconds=300] [--no-hint 等 run_agent.py 的其他參數...]}"
 CHUNK_SIZE="${2:-10}"
 CYCLE_SECONDS="${3:-300}"
 shift $(( $# >= 3 ? 3 : $# ))   # 剩下的參數原樣傳給 run_agent.py（例如 --no-hint、--max-steps）
 EXTRA_ARGS=("$@")
+
+case "$MODE" in
+    graph|all) ENTRY="src/agent/run_agent.py"; ENTRY_MODE_ARGS=(--mode "$MODE") ;;
+    vector)    ENTRY="src/agent/run_vector_baseline.py"; ENTRY_MODE_ARGS=() ;;   # 純向量 A 組（本機 Qwen 生成）
+    *) echo "mode 必須是 graph、all 或 vector，收到：$MODE"; exit 2 ;;
+esac
 
 GPU_MAX_C="${GPU_MAX_C:-75}"     # 開始下一批前，GPU 溫度要降到這個以下
 CPU_MAX_C="${CPU_MAX_C:-80}"     # CPU 同上
@@ -24,12 +30,17 @@ TEMP_WAIT_MAX=600                # 最多為了降溫多等幾秒（超過就放
 
 RUN_TAG="$MODE"
 for a in "${EXTRA_ARGS[@]:-}"; do [ "$a" = "--no-hint" ] && RUN_TAG="${MODE}_nohint"; done   # 避免蓋掉有提示的結果
+[ "$MODE" = "vector" ] && RUN_TAG="vector_local_rebuilt"
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 RUN_DIR="${TMPDIR:-/tmp}/tarnished-rag-llama"
 CHUNK_DIR="$RUN_DIR/chunks_${RUN_TAG}"
 TEMP_LOG="$RUN_DIR/paced_run_${RUN_TAG}_temps.log"
-FINAL_OUT="$ROOT/eval/results/agent_${RUN_TAG}_predictions.jsonl"
+if [ "$MODE" = "vector" ]; then
+    FINAL_OUT="$ROOT/eval/results/vector_baseline_local_rebuilt_predictions.jsonl"   # 不覆蓋舊的 vector_baseline_predictions.jsonl（舊索引）
+else
+    FINAL_OUT="$ROOT/eval/results/agent_${RUN_TAG}_predictions.jsonl"
+fi
 mkdir -p "$CHUNK_DIR"
 
 preflight() {
@@ -95,7 +106,7 @@ while [ "$i" -lt "$TOTAL" ]; do
     else
         t0=$(date +%s)
         echo "--- 第 $batch_no 批：$ids ---"
-        python3 "$ROOT/src/agent/run_agent.py" --mode "$MODE" --ids "$ids" --out "$out" "${EXTRA_ARGS[@]}"
+        python3 "$ROOT/$ENTRY" "${ENTRY_MODE_ARGS[@]}" --ids "$ids" --out "$out" "${EXTRA_ARGS[@]}"
         elapsed=$(( $(date +%s) - t0 ))
         log_temps "第 $batch_no 批跑完，耗時 ${elapsed}s"
         remain=$((CYCLE_SECONDS - elapsed))

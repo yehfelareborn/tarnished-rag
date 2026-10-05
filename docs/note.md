@@ -207,3 +207,20 @@ S4 的查詢工具回傳 `Remembrance of theBlasphemous` 時發現 `remembrances
 - ~~A2 的 53 條~~：已逐條分類、處理、能修的都修完（2026-10-02～10-04，詳見 `docs/graph-schema.md`）。15 條使用者確認是真正錯誤，已從資料層移除；另一個爬蟲 bug（Crucible Knights／Night's Cavalry 地點標題遺失）也修了，救回 15 個地點、2 條因此對上；~~3 組同名 Location 重複~~（Divine Tower of Caelid 等）也合併了，解掉 Godskin Apostle 的假訊號。剩 35 條都不是真衝突（15 條真正的資料缺漏，含 Mad Pumpkin Head／Black Knife Assassin 這兩隻確認無資料可救；~21 條大區/子地點階層）。語料庫是否去重（43 組同名 Item，只有圖層合併了，corpus.jsonl 還沒）。
 - ~~232 個 stub 保留與否~~：已決定保留（2026-10-01）。
 - ~~向量索引與兩個基準線是舊資料~~：已重建索引（3649 篇）並重跑兩個基準線（2026-09-30），見 `docs/run_haiku.md`。
+
+## 履歷描述（side project 版本，2026-10-05 整理）
+
+**Elden Ring GraphRAG**（Side Project）
+*Knowledge graph + LLM tool use vs. vector RAG, benchmarked on a self-built 106-question eval set*
+
+- Built a typed knowledge graph (~3.9k nodes, ~6.6k relations, Neo4j) from wiki-scraped CSV sources, with entity resolution (aliases, typo tolerance, duplicate merging), per-case audit logs, and 80 unit tests.
+- Implemented a tool-calling agent in which the LLM chooses among four graph queries and vector search, with error-tolerant retries and step limits. The same agent runs on a local 4B model (llama.cpp) and on Claude Haiku through a single provider adapter.
+- Designed a 106-question benchmark over 7 question types, with ablations (vector-only, graph-only, hybrid, with/without entity hints) and failure analysis. On multi-hop relational questions, graph-based answers scored 100% (18/18) vs. 77.8% (14/18) for vector RAG under the same generator.
+- Diagnosed silent tool failures and prompt gaps; targeted fixes raised false-premise accuracy from 16.7% to 58.3% on a 6-question subset.
+- Built a resumable, temperature-gated batch runner after diagnosing hardware shutdowns during sustained GPU workloads.
+
+**使用上的注意**（對應 `docs/experiments.md` 的限制）
+- multi-hop 數字是單次執行、18 題，每題約 5.6 個百分點；B、C 的主表還是修正 prompt 之前的版本。
+- 16.7% → 58.3% 只能寫成「on a 6-question subset」，不能寫成整體提升。
+- 不要用 production、users、outperforms in general 這類說法。
+- 中文查詢不支援、只有 Elden Ring 一個領域，放在 README 和面試時說明。

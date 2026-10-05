@@ -16,6 +16,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--k", type=int, default=5)
     ap.add_argument("--limit", type=int, default=None, help="只跑前 N 題（除錯用）")
+    ap.add_argument("--ids", default=None, help="只跑這些題號，逗號分隔，例如 q06,q60（給分批 runner 用）")
     ap.add_argument("--backend", choices=["local", "anthropic"], default="local")
     ap.add_argument("--model", default=CLOUD_MODEL, help="backend=anthropic 時使用的模型")
     ap.add_argument("--out", type=Path, default=None,
@@ -27,6 +28,13 @@ def main():
         args.out = ROOT / "eval" / "results" / name
 
     questions = [json.loads(l) for l in open(ROOT / "eval" / "questions.jsonl", encoding="utf-8") if l.strip()]
+    if args.ids:
+        by_id = {q["id"]: q for q in questions}
+        want = [i.strip() for i in args.ids.split(",") if i.strip()]
+        missing = [i for i in want if i not in by_id]
+        if missing:
+            raise SystemExit(f"題庫裡沒有這些題號：{missing}")
+        questions = [by_id[i] for i in want]
     if args.limit:
         questions = questions[: args.limit]
 
